@@ -8,6 +8,7 @@ django = "*"
 environs = "*"
 botocore = "*"
 gunicorn = "*"
+boto3 = "*"
 
 [dev-packages]
 
