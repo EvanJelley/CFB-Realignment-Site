@@ -922,7 +922,7 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
           <a className="navbar-brand" href="#"> CFB Realignment Map</a >
           <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <img src={AWSBUCKET +  + "/images/menu.png"} alt="hamburger" className='navbar-toggler-img' />
+            <img src={AWSBUCKET + "/images/menu.png"} alt="hamburger" className='navbar-toggler-img' />
           </button >
           <div className="collapse navbar-collapse" id="navbarSupportedContent" >
             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
