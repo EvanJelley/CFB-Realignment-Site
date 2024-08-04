@@ -38,12 +38,13 @@ const calculateConfIconSize = () => {
 const APIURL = 'https://cfb-realignment-api-1eaa1a13606e.herokuapp.com';
 const TEAMLOGOSIZE = calculateTeamIconSize();
 const CONFLOGOSIZE = calculateConfIconSize();
+const AWSBUCKET = 'https://cfb-realignment-frontend.s3.us-east-2.amazonaws.com/';
 
-const footballImage = "static/dist/images/football.png";
-const basketballImage = "static/dist/images/basketball.png";
-const playImage = "static/dist/images/play.png";
-const githubLogo = "static/dist/images/github.png";
-const pauseImage = "static/dist/images/pause.png";
+const footballImage = AWSBUCKET + "static/dist/images/football.png";
+const basketballImage = AWSBUCKET + "static/dist/images/basketball.png";
+const playImage = AWSBUCKET +"static/dist/images/play.png";
+const githubLogo = AWSBUCKET + "static/dist/images/github.png";
+const pauseImage = AWSBUCKET + "static/dist/images/pause.png";
 
 const chartOptions = {
   aspectRatio: 1.7,
@@ -567,7 +568,7 @@ function App() {
         </div>
         :
         <>
-          <img src={sport == 'football' ? 'static/dist/images/football_backdrop.jpg' : 'static/dist/images/basketball_backdrop.webp'} className='backdrop' />
+          <img src={sport == 'football' ? AWSBUCKET + 'static/dist/images/football_backdrop.jpg' : AWSBUCKET + 'static/dist/images/basketball_backdrop.webp'} className='backdrop' />
           <div className='main-app-container'>
             <NavBar conferenceNames={conferenceNames}
               historicalConferenceNames={historicalConferenceNames}
