@@ -1,0 +1,642 @@
+/* COLORS
+    (48,49,72) - Dark
+    (85,75,97) - Medium
+    (107,112,127) - Gray
+    (220,202,195) - Light
+    (135,106,75) - Brown
+*/
+
+.backdrop {
+    position: fixed;
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    width: 100%;
+    z-index: -1;
+}
+
+.loading {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    z-index: 1000;
+}
+
+.main-app-container {
+    position: relative;
+    z-index: 100;
+}
+
+/* General Styles */
+body {
+    font-family: "Montserrat", sans-serif;
+    background: white;
+}
+
+#mapcontainer {
+    height: 23.5rem;
+}
+
+.conference-selection-img {
+    width: 2.5rem;
+    height: auto;
+}
+
+.leaflet-control-attribution {
+    font-size: 5px;
+}
+
+.hawaii-map-overlay .leaflet-control-attribution {
+    display: none;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Nav Styles */
+.navbar-main {
+    background-color: rgb(0, 37, 76);
+    color: white;
+}
+
+.navbar a {
+    color: inherit;
+}
+
+.navbar-toggler-img {
+    border: none;
+    width: 2rem;
+}
+
+.dropdown-item {
+    margin: 0;
+    padding: 0.5rem 1rem;
+}
+
+.navbar-logo {
+    height: 2rem;
+}
+
+.list-inline-item:not(:last-child) {
+    margin: 0;
+}
+
+
+@media screen and (min-width: 768px) {
+    .dropdown-menu-conferences {
+        width: 26rem;
+    }
+}
+
+.dropdown-menu-conferences button:focus {
+    border: none;
+    outline: none;
+}
+
+.dropdown-menu-conferences {
+    padding: 0.5rem 1rem;
+}
+
+.sport-selection-img {
+    height: 1rem;
+}
+
+.searchbar {
+    border-radius: 20px;
+}
+
+.dropdown-menu {
+    z-index: 10000;
+}
+
+.quickselect-dropdown {
+    overflow: scroll;
+    height: 20rem;
+}
+
+/* Timeline Styles */
+.timeline-year {
+    display: inline-block;
+    align-items: center;
+    justify-content: center;
+    font-family: "Crimson Text", serif;
+    text-align: center;
+}
+
+.line-dot {
+    width: 100%;
+    height: 30px;
+    overflow: hidden;
+    position: relative;
+    border-bottom: 1px solid rgb(0, 37, 76);
+    border-top: 1px solid rgb(0, 37, 76);
+}
+
+.line-dot:hover {
+    cursor: pointer;
+}
+
+.triangle {
+    width: 0;
+    height: 0;
+    margin: auto;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid rgb(0, 37, 76);
+    position: relative;
+}
+
+.yearSelectorTriangle {
+    border-bottom: 1px solid rgb(0, 37, 76);
+}
+
+/* Main Content */
+.map-chart-row {
+    margin: 1rem
+}
+
+/* Chart */
+.chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 35vh;
+}
+
+/* Map */
+.map-container {
+    background-color: white;
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 1rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+/* Map Controls */
+.map-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: rgb(0, 37, 76);
+    background-color: white;
+}
+
+.autoscroll-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0, 37, 76);
+    color: white;
+    padding: 0.5rem;
+    margin: 0.5rem auto;
+    border-radius: 20px;
+}
+
+.autoscroll-button p {
+    align-items: center;
+    margin: 0;
+    padding-left: .5rem;
+}
+
+.map-controls-button {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    margin: auto;
+    border-radius: 20px;
+}
+
+.secondary-button {
+    background-color: #fff;
+    color: rgb(0, 37, 76);
+    overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+}
+
+.secondary-button:hover {
+    background-color: #f1f1f1;
+}
+
+.autoscroll-button button {
+    background-color: inherit;
+    border: none;
+    color: inherit;
+    padding: 0 .5rem;
+}
+
+.autoscroll-button button:focus {
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
+
+.autoscroll-button:hover {
+    background-color: #f1f1f1;
+    color: rgb(0, 37, 76)
+}
+
+.autoscroll-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.autoscroll-button img {
+    height: 1.5rem;
+    margin-left: .5rem;
+}
+
+.button-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    overflow: hidden;
+    margin: auto;
+}
+
+.more-button-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    margin: auto;
+}
+
+.first-year-button {
+    background-color: #fff;
+    border: none;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: #555;
+    outline: none;
+    border-right: 1px solid #ddd;
+}
+
+.first-year-button:hover {
+    background-color: #f1f1f1;
+}
+
+.first-year-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.present-button {
+    background-color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #555;
+    outline: none;
+}
+
+.present-button:hover {
+    background-color: #f1f1f1;
+}
+
+.present-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.present-button:after {
+    content: '';
+    margin-left: 10px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.more-circle {
+    margin: auto;
+}
+
+.more-circle::marker {
+    content: '';
+    margin-left: 10px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+
+}
+
+.more-button:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown-menu-up {
+    top: auto;
+    bottom: 100%;
+    right: 0%;
+    transform: translate(-70%, -5px);
+}
+
+.more-map-menu {
+    background-color: #555;
+    opacity: 0.9;
+    padding: 0;
+    margin: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 17rem;
+}
+
+.map-controls-header {
+    font-size: medium;
+    color: #f1f1f1;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.map-controls-radio {
+    width: 100%;
+}
+
+.map-more-control {
+    display: flex;
+    font-size: small;
+    color: #f1f1f1;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    background-color: #555;
+    border: none;
+    border-radius: 0;
+    width: 100%;
+}
+
+.btn-secondary:hover {
+    cursor: pointer;
+}
+
+.btn-secondary:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.map-control-plusminus-container {
+    margin-left: 1rem;
+}
+
+.plusminus-btn {
+    display: inline;
+    font-size: medium;
+    color: #f1f1f1;
+    background-color: #555;
+    border: 1px solid #f1f1f1;
+    border-radius: 0;
+    align-items: center;
+    width: 1.5rem;
+    margin: 0;
+}
+
+.plusminus-btn:hover {
+    cursor: pointer;
+    color: #555;
+    background-color: #f1f1f1;
+}
+
+.plusminus-speed-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.plusminus-display {
+    display: inline;
+    margin-left: 1rem;
+}
+
+.option-check {
+    padding-left: 1rem;
+}
+
+.chart-details-container {
+    background-color: white;
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 20px;
+    overflow: scroll;
+    height: 90vh;
+}
+
+.ind-conf-detail-container {
+    margin: 0;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgb(107, 135, 165);
+}
+
+/* Conference Detail */
+
+.conference-details {
+    color: rgb(0, 37, 76);
+}
+
+.conference-details-main {
+    display: flex;
+    align-items: center;
+    margin: 1rem;
+    border-bottom: 1px solid rgb(107, 135, 165);
+    font-size: 1rem;
+}
+
+.conference-details-category-header {
+    font-weight: bold;
+    font-family: "Crimson Text", serif;
+}
+
+.conference-details-category-header-year {
+    padding-left: 1rem;
+    font-family: "Crimson Text", serif;
+}
+
+.conference-details-conference {
+    justify-content: left;
+    padding-right: 1rem;
+    border-right: 1px solid rgb(107, 135, 165);
+}
+
+.conference-details-year {
+    padding-left: 1rem;
+}
+
+.conference-details-specific {
+    list-style: none;
+    padding-left: 0;
+    margin: 1rem;
+    justify-content: space-between;
+}
+
+.conference-details-category {
+    font-weight: bold;
+    padding: .5rem;
+    padding-right: 1rem;
+    border-bottom: 1px solid rgb(107, 135, 165);
+}
+
+.conference-details-table {
+    justify-content: center;
+    margin: auto;
+}
+
+.conference-details-item {
+    padding-left: 1rem;
+    border-left: 1px solid rgb(107, 135, 165);
+    border-bottom: 1px solid rgb(107, 135, 165);
+}
+
+.conference-details-conference-img {
+    width: auto;
+    height: 2rem;
+    padding-left: 1rem;
+}
+
+.conference-details-color-square {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: .5rem;
+    border-radius: 50%;
+}
+
+.out-of-range-button {
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 20px;
+    padding: 2rem;
+    outline: none;
+    background-color: inherit;
+    align-items: center;
+}
+
+.out-of-range-button:hover {
+    background-color: rgb(107, 135, 165);
+    color: white;
+    cursor: pointer;
+}
+
+/* Chart Controls */
+
+.chart-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: rgb(0, 37, 76);
+    background-color: white;
+    border-top: 1px solid rgb(107, 135, 165);
+}
+
+/* School List */
+
+.school-list-container {
+    background-color: white;
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 1rem;
+    overflow: scroll;
+    margin-bottom: 1rem;
+    height: 70vh;
+}
+
+.team-list-conf {
+    position: relative;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.team-list-conflogo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    /* This centers the element */
+    width: 50%;
+    /* Adjust width as needed */
+    background-size: cover;
+    z-index: 1;
+    /* Lower z-index so it sits in the background */
+    opacity: 0.1;
+}
+
+.team-list-schools {
+    position: relative;
+    /* This ensures it's positioned in the stacking context */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem;
+    z-index: 2;
+    /* Higher z-index so it sits in front */
+}
+
+.team-list-schoollogo {
+    width: 1.5rem;
+    height: auto;
+    margin: 0 1rem;
+}
+
+.team-list-table-row-button {
+    border: none;
+    background-color: inherit;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.team-list-table-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .5rem 2rem;
+    border-bottom: 1px solid rgb(107, 135, 165);
+}
+
+.team-list-table-row-button:hover {
+    background-color: rgb(107, 135, 165);
+    color: white;
+    cursor: pointer;
+}
+
+.team-list-table-row td {
+    margin: 0 1.5rem;
+}
+
+.team-list-table {
+    width: 100%;
+}
+
+.team-list-schools th {
+    align-items: center;
+    justify-content: center;
+    border-bottom: 2px solid rgb(107, 135, 165);
+    font-size: 2rem;
+    margin: auto;
+    font-family: "Crimson Text", serif;
+}
+
+.school-details {
+    margin: 1rem 0;
+}
+
+.school-details {
+    font-family: "Crimson Text", serif;
+}
+
+.school-details table {
+    font-family: "Montserrat", sans-serif;
+}
+
+.school-details-schoollogo {
+    width: 2.5rem;
+    height: auto;
+    margin: 0 1rem;
+}

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.env
+
+# Django
+*.log
+*.pot
+*.pyc
+.Python
+media
+staticfiles
+db.sqlite3
+backup.sql
+local_postgres_dump.sql
+
+# macOS
+.DS_Store
+
+# Environment Variables
+.env
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.venv
+
+# Static files
+staticfiles/
