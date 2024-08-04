@@ -42,7 +42,7 @@ const AWSBUCKET = 'https://cfb-realignment-frontend.s3.us-east-2.amazonaws.com/'
 
 const footballImage = AWSBUCKET + "static/dist/images/football.png";
 const basketballImage = AWSBUCKET + "static/dist/images/basketball.png";
-const playImage = AWSBUCKET +"static/dist/images/play.png";
+const playImage = AWSBUCKET + "static/dist/images/play.png";
 const githubLogo = AWSBUCKET + "static/dist/images/github.png";
 const pauseImage = AWSBUCKET + "static/dist/images/pause.png";
 
