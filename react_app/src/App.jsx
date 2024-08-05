@@ -43,7 +43,6 @@ const AWSBUCKET = 'https://cfb-realignment-frontend.s3.us-east-2.amazonaws.com/'
 const footballImage = AWSBUCKET + "static/dist/images/football.png";
 const basketballImage = AWSBUCKET + "static/dist/images/basketball.png";
 const playImage = AWSBUCKET + "static/dist/images/play.png";
-const githubLogo = AWSBUCKET + "static/dist/images/github.png";
 const pauseImage = AWSBUCKET + "static/dist/images/pause.png";
 
 const chartOptions = {
@@ -845,7 +844,7 @@ function MapControls({ setAnimation, animate, firstYear, lastYear, setYear, sele
         <AutoScrollButton setAnimation={setAnimation} animate={animate} />
         <li className="nav-item dropdown more-circle">
           <a className="nav-link more-button more-button-container" href="#" id="navbarDropdown" role="button"
-            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</a>
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src={ AWSBUCKET + "static/dist/images/settings.png"} className='setting-icon'/></a>
           <ul className="dropdown-menu dropdown-menu-up more-map-menu" aria-labelledby="navbarDropdown">
 
             <h3 className='map-controls-header'>Map Controls</h3>
@@ -1083,16 +1082,23 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                   </li>
                 </ul>
               </li>
+              <li className="nav-item dropdown">
+                <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  For Devs
+                </a>
+                <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <h6 className="dropdown-header">API</h6>
+                      <a className="dropdown-item" href="https://api.cfbrealignment.com/swagger/" target="_blank" rel="noopener noreferrer">Swagger</a>
+                      <a className="dropdown-item" href="https://api.cfbrealignment.com/redoc/" target="_blank" rel="noopener noreferrer">Redoc</a>
+                  <h6 className="dropdown-header">GitHub</h6>
+                      <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-API">API</a>
+                      <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-Site">Front-end</a>
+                </div>
+              </li>
+                      
             </ul>
           </div>
-
-          <ul className="navbar-nav d-flex flex-row me-1">
-            <li className="nav-item me-3 me-lg-0">
-              <a className="nav-link" href="https://github.com/EvanJelley/CFBRealignmentVisualizer" target="_blank" rel="noopener noreferrer">
-                <img src={githubLogo} alt='GitHub' className='navbar-logo' />
-              </a>
-            </li>
-          </ul>
 
           <form className="w-auto" onChange={searchYears} onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -1383,13 +1389,13 @@ const HawaiiMapOverlay = ({ school, schoolIcons, conference, lineOptions, circle
   const lineToCenter = [hawaiiCenter, [Number(conference.capital.latitude), Number(conference.capital.longitude)]]
 
   const calculateHeight = () => {
-    if (vpWidth < 768) return 12;
+    if (vpWidth < 768) return 10;
     if (vpWidth < 1500) return 12;
     return 37;
   };
 
   const calculateWidth = () => {
-    if (vpWidth < 768) return 12;
+    if (vpWidth < 768) return 10;
     if (vpWidth < 1500) return 12;
     return 37;
   }
