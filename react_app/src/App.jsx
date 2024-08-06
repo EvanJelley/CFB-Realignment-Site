@@ -35,7 +35,7 @@ const calculateConfIconSize = () => {
   return 30;
 };
 
-const APIURL = 'https://cfb-realignment-api-1eaa1a13606e.herokuapp.com';
+const APIURL = 'https://api.cfbrealignment.com';
 const TEAMLOGOSIZE = calculateTeamIconSize();
 const CONFLOGOSIZE = calculateConfIconSize();
 const AWSBUCKET = 'https://cfb-realignment-frontend.s3.us-east-2.amazonaws.com/';
@@ -73,6 +73,7 @@ function App() {
   const [conferenceList, setConferenceList] = useState([])
   const [filteredConferenceList, setFilteredConferenceList] = useState([])
   const [summaryStatsConfObject, setSummaryStatsConfObject] = useState({})
+  const [allSchools, setAllSchools] = useState([])
 
 
   const [conferenceIcons, setConferenceIcons] = useState({})
@@ -90,7 +91,6 @@ function App() {
   const [confCountryOpacity, setConfCountryOpacity] = useState(0.5)
   const [confCountrySize, setConfCountrySize] = useState(100)
 
-
   const [conferenceNames, setConferenceNames] = useState(["SEC", "Big Ten", "ACC", "Big 12", "Pac 12", "Mountain West", "Sun Belt", "CUSA", "MAC", "AAC", "Big East", "NCAA"])
   const [historicalConferenceNames, setHistoricalConferenceNames] = useState(["SWC", "Big Eight", "WAC", "Big West", "Skyline", "Border"])
   const [selectedConferences, setSelectedConferences] = useState([])
@@ -98,6 +98,8 @@ function App() {
   const [selectedYear, setSelectedYear] = useState('')
   const [sport, setSport] = useState('football')
   const [splitConference, setSplitConference] = useState(false)
+
+  const [customConferenceMode, setCustomConferenceMode] = useState(false)
 
   { /* API Calls */ }
   const getConferences = async () => {
@@ -141,7 +143,8 @@ function App() {
       });
       setConferenceIcons(confIcons);
 
-      const responseSchools = await axios.get(APIURL + '/api/schoollogos/')
+      const responseSchools = await axios.get(APIURL + '/api/schools/')
+      setAllSchools(responseSchools.data)
       const schoolIconsPromises = responseSchools.data.map(async (school) => {
         const dimensions = await getImageDimmensions(school.logo, TEAMLOGOSIZE);
         return { name: school.name, icon: L.icon({ iconUrl: school.logo, iconSize: dimensions }) };
@@ -553,6 +556,10 @@ function App() {
     }
   }
 
+  const handleCustomConfMode = () => {
+    setCustomConferenceMode(!customConferenceMode)
+  }
+
   var myIcon = L.icon({
     iconUrl: APIURL + '/media/images/conf_logos/ncaa.png',
     iconSize: [10, 10],
@@ -580,7 +587,9 @@ function App() {
               splitConference={splitConference}
               selectedConferences={selectedConferences}
               sport={sport}
-              preprogrammedAnimations={preprogrammedAnimationsHandler} />
+              preprogrammedAnimations={preprogrammedAnimationsHandler}
+              customConfModeHandler={handleCustomConfMode} />
+            {customConferenceMode && <BuildConferencePopUp conferenceNames={conferenceNames} historicalConferenceNames={historicalConferenceNames} schools={allSchools} />}
             <div className='row map-chart-row'>
               <div className='col-12 col-md-7'>
                 <div className="map-container">
@@ -637,10 +646,113 @@ function App() {
   )
 }
 
+function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, schools }) {
+  schools = schools.sort((a, b) => a.name.localeCompare(b.name))
+  const [selectedSchools, setSelectedSchools] = useState([])
+
+  const addSchoolHandler = (e) => {
+    const button = e.target.closest('button');
+    const schoolName = button.getAttribute('data-team-name');
+    const school = schools.filter((school) => school.name === schoolName)[0];
+    selectedSchools.includes(school) ? setSelectedSchools(selectedSchools.filter((school) => school !== schoolName)) : setSelectedSchools([...selectedSchools, school])
+  }
+
+  const removeSchoolHandler = (e) => {
+    const button = e.target.closest('button');
+    const schoolName = button.getAttribute('data-team-name');
+    setSelectedSchools(selectedSchools.filter((school) => school.name !== schoolName))
+  }
+
+  return (
+    <div className='build-conference-popup'>
+      <div className='build-conference-popup-content'>
+        <h2>Build Your Own Conference</h2>
+        <div className='row'>
+          <div className='col-12 col-md-6'>
+            <div className='conference-list'>
+              <h3>Current Conferences</h3>
+              {conferenceNames.map((conference) => (
+                <button>{conference}</button>
+              ))}
+              <h3>Historical Conferences</h3>
+              {historicalConferenceNames.map((conference) => (
+                <button>{conference}</button>
+              ))}
+            </div>
+          </div>
+          <div className='col-12 col-md-6'>
+            <h3>Conference Details</h3>
+            <div className='conference-details-specific'>
+              <table className='conference-details-table'>
+                <tbody>
+                  <tr>
+                    <td className='conference-details-category'>Number of Schools</td>
+                    <td className='conference-details-item'>{selectedSchools.length}</td>
+                  </tr>
+                  <tr>
+                    <td className='conference-details-category'>
+                      <span className="conference-details-color-square"></span>
+                      Avg. Distance Between Schools
+                    </td>
+                    <td className='conference-details-item'>0 miles</td>
+                  </tr>
+                  <tr>
+                    <td className='conference-details-category'>
+                      <span className="conference-details-color-square"></span>
+                      Avg. Distance from GeoCenter
+                    </td>
+                    <td className='conference-details-item'>0 miles</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div className='row'>
+          <div className='col-12 col-md-6'>
+            <h3>Schools</h3>
+            <div className='school-list'>
+              <table className='school-table'>
+                <tbody>
+                  {schools.map((school) => (
+                    <button onClick={addSchoolHandler} data-team-name={school.name} className='team-list-table-row-button'>
+                      <tr key={school.id} className='team-list-table-row'>
+                        <td><img src={school.logo} alt={school.name} className='team-list-schoollogo' /></td>
+                        <td>{school.name}</td>
+                        <td>{school.city}, {school.state}</td>
+                      </tr>
+                    </button>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className='col-12 col-md-6'>
+            <h3>Selected Schools</h3>
+            <div className='school-list'>
+              <table className='school-table'>
+                <tbody>
+                  {selectedSchools.map((school) => (
+                    <tr key={school.id} className='custom-team-list-table-row'>
+                      <td><img src={school.logo} alt={school.name} className='custom-team-list-schoollogo' /></td>
+                      <td>{school.name}</td>
+                      <td>{school.city}, {school.state}</td>
+                      <td><button onClick={removeSchoolHandler} className='remove-button' data-team-name={school.name}>Remove</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div >
+  )
+
+}
+
 function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceColors, selectedConferences, selectedYear, yearMapButtonHandler, chartData, ncaaConfObject }) {
   const [orderedConferences, setOrderedConferences] = useState([])
-
-  console.log(filteredConferenceList.length)
 
   useEffect(() => {
     let currentConferences = filteredConferenceList.map((conference) => conference.conference);
@@ -702,7 +814,6 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
     </div>
   )
 }
-
 
 function TeamList({ filteredConferenceList, conferenceLogosObject, schoolIcons }) {
   const [allTeams, setAllTeams] = useState([]);
@@ -844,7 +955,7 @@ function MapControls({ setAnimation, animate, firstYear, lastYear, setYear, sele
         <AutoScrollButton setAnimation={setAnimation} animate={animate} />
         <li className="nav-item dropdown more-circle">
           <a className="nav-link more-button more-button-container" href="#" id="navbarDropdown" role="button"
-            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src={ AWSBUCKET + "static/dist/images/settings.png"} className='setting-icon'/></a>
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src={AWSBUCKET + "static/dist/images/settings.png"} className='setting-icon' /></a>
           <ul className="dropdown-menu dropdown-menu-up more-map-menu" aria-labelledby="navbarDropdown">
 
             <h3 className='map-controls-header'>Map Controls</h3>
@@ -913,7 +1024,7 @@ function AutoScrollButton({ setAnimation, animate }) {
   )
 }
 
-function NavBar({ conferenceNames, historicalConferenceNames, selectConference, searchYears, conferenceLogosObject, sportHandler, selectedConferences, sport, preprogrammedAnimations }) {
+function NavBar({ conferenceNames, historicalConferenceNames, selectConference, searchYears, conferenceLogosObject, sportHandler, selectedConferences, sport, preprogrammedAnimations, customConfModeHandler }) {
   return (
     <>
       <nav className="navbar navbar-main navbar-expand-lg" >
@@ -1082,6 +1193,11 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                   </li>
                 </ul>
               </li>
+              <li className='nav-item'>
+                <button onClick={customConfModeHandler} className='nav-link custom-conf-button'>
+                  Build Custom Conference
+                </button>
+              </li>
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1089,16 +1205,17 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                 </a>
                 <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                   <h6 className="dropdown-header">API</h6>
-                      <a className="dropdown-item" href="https://api.cfbrealignment.com/swagger/" target="_blank" rel="noopener noreferrer">Swagger</a>
-                      <a className="dropdown-item" href="https://api.cfbrealignment.com/redoc/" target="_blank" rel="noopener noreferrer">Redoc</a>
+                  <a className="dropdown-item" href="https://api.cfbrealignment.com/swagger/" target="_blank" rel="noopener noreferrer">Swagger</a>
+                  <a className="dropdown-item" href="https://api.cfbrealignment.com/redoc/" target="_blank" rel="noopener noreferrer">Redoc</a>
                   <h6 className="dropdown-header">GitHub</h6>
-                      <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-API">API</a>
-                      <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-Site">Front-end</a>
+                  <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-API">API</a>
+                  <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-Site">Front-end</a>
                 </div>
               </li>
-                      
+
             </ul>
           </div>
+
 
           <form className="w-auto" onChange={searchYears} onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -1211,9 +1328,8 @@ const DraggableTimeline = ({ years, setYear, selectedYear, redraw, setRedraw, se
         </Draggable >
       </div >
       <div className="yearSelectorTriangle">
-        <div
-          className="triangle"
-        ></div>
+        <div className="triangle">
+        </div>
       </div>
     </>
   );

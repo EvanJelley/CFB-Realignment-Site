@@ -120,6 +120,26 @@ body {
     height: 20rem;
 }
 
+.custom-conf-button {
+    background-color: rgb(0, 37, 76);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+}
+
+.custom-conf-button:hover {
+    outline: none;
+    box-shadow: none;
+    background-color: white;
+    color: rgb(0, 37, 76);
+}
+
+.custom-conf-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
 /* Timeline Styles */
 .timeline-year {
     display: inline-block;
@@ -643,4 +663,72 @@ body {
     width: 2.5rem;
     height: auto;
     margin: 0 1rem;
+}
+
+/* Conference Popup */
+.build-conference-popup {
+    background-color: white;
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 20px;
+    padding: 1rem;
+    margin: 1rem;
+    position: absolute;
+    z-index: 10000;
+}
+
+.school-list {
+    height: 50vh;
+    overflow: scroll;
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 20px;
+}
+
+.school-table {
+    width: 100%;
+}
+
+.custom-team-list-schoollogo {
+    width: 1.5rem;
+    height: auto;
+    margin: 0 1rem;
+}
+
+.custom-team-list-table-row-button {
+    border: none;
+    background-color: inherit;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.custom-team-list-table-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .5rem 2rem;
+    border-bottom: 1px solid rgb(107, 135, 165);
+    width: 100%;
+}
+
+.custom-team-list-table-row-button:hover {
+    background-color: rgb(107, 135, 165);
+    color: white;
+    cursor: pointer;
+}
+
+.custom-team-list-table-row td {
+    margin: 0 .5rem;
+}
+
+.remove-button {
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 20px;
+    background-color: inherit;
+    color: rgb(107, 135, 165);
+    cursor: pointer;
+}
+
+.remove-button:hover {
+    background-color: rgb(107, 135, 165);
+    color: white;
 }
