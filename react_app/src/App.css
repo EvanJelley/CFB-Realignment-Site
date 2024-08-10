@@ -121,18 +121,17 @@ body {
 }
 
 .custom-conf-button {
-    background-color: rgb(0, 37, 76);
-    color: white;
+    background-color: white;
+    color: rgb(0, 37, 76);
     border: none;
-    border-radius: 20px;
     padding: 0.5rem 1rem;
 }
 
 .custom-conf-button:hover {
     outline: none;
     box-shadow: none;
-    background-color: white;
-    color: rgb(0, 37, 76);
+    background-color: rgb(0, 37, 76);
+    color: white;
 }
 
 .custom-conf-button:focus {

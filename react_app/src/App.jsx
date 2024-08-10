@@ -23,7 +23,9 @@ import {
   pointToPointCalc,
   calculateConvexHull,
   averagedistanceCalcMultiPoints,
-  avgDistanceFromCenter
+  avgDistanceFromCenter,
+  calculateGeoCenter,
+  findCapital,
 } from './distances';
 
 Chart.register(CategoryScale);
@@ -109,6 +111,7 @@ function App() {
 
   const [customConferenceMode, setCustomConferenceMode] = useState(false)
   const [customConfs, setCustomConfs] = useState([])
+  const [selectedCustomConfs, setSelectedCustomConfs] = useState([])
 
   { /* API Calls */ }
   const getConferences = async () => {
@@ -602,6 +605,16 @@ const handleCustomConfs = (conf) => {
     setCustomConfs(customConfsNew);
 }
 
+const handleSelectCustomConfs = (conf) => {
+    let selectedCustomConfsNew = [];
+    if (selectedCustomConfs.includes(conf)) {
+      selectedCustomConfsNew = selectedCustomConfs.filter((selectedConf) => selectedConf !== conf);
+    } else {
+      selectedCustomConfsNew = [...selectedCustomConfs, conf];
+    }
+    setSelectedCustomConfs(selectedCustomConfsNew);
+}
+
   var myIcon = L.icon({
     iconUrl: APIURL + '/media/images/conf_logos/ncaa.png',
     iconSize: [10, 10],
@@ -640,7 +653,8 @@ const handleCustomConfs = (conf) => {
               selectedConferences={selectedConferences}
               sport={sport}
               preprogrammedAnimations={preprogrammedAnimationsHandler}
-              customConferences={customConfs} />
+              customConferences={customConfs}
+              selectCustomConferences={handleSelectCustomConfs} />
             <div className='row map-chart-row'>
               <div className='col-12 col-md-7'>
                 <div className="map-container">
@@ -651,7 +665,8 @@ const handleCustomConfs = (conf) => {
                     mapElements={mapDisplay}
                     confColors={conferenceColors}
                     countryOpacity={confCountryOpacity}
-                    confCountrySize={confCountrySize} />
+                    confCountrySize={confCountrySize} 
+                    customConferences={selectedCustomConfs}/>
                   <DraggableTimeline
                     years={conferenceYears}
                     setYear={selectYearHandler}
@@ -708,7 +723,8 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
   const [availablConfs, setAvailableConfs] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [confName, setConfName] = useState('')
-
+  const [GeoCenter, setGeoCenter] = useState([null, null])
+  const [capital, setCapital] = useState(null)
 
   const allYears = Array.from({ length: 2025 - 1896 }, (_, i) => 1896 + i);
 
@@ -745,8 +761,11 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
       schools: selectedSchools,
       avgDistanceBetweenSchools: selectedSchoolsDistBetween,
       avgDistanceFromCenter: selectedSchoolsDistFromCenter,
-      name: confName,
-      custom: true
+      conference: confName,
+      custom: true,
+      centerLat: GeoCenter[0],
+      centerLon: GeoCenter[1],
+      capital: capital,
     }
     customConfsHandler(confObject)
     setSelectedSchools([])
@@ -799,8 +818,24 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
       coords.push([Number(school.latitude), Number(school.longitude)])
     });
     setSelectedSchoolsCoords(coords)
-    coords.length > 1 ? setSelectedSchoolsDistBetween(Math.round(averagedistanceCalcMultiPoints(coords, "degrees"))) : 0
-    coords.length > 1 ? setSelectedSchoolsDistFromCenter(Math.round(avgDistanceFromCenter(coords))) : 0
+    if (coords.length > 1) {
+      let center = calculateGeoCenter(coords)
+      setGeoCenter(center);
+      let capital = findCapital(center);
+      setCapital({
+        'city': capital[0],
+        'state': capital[1],
+        'latitutde': capital[2],
+        'longitude': capital[3],
+        'id': capital[4]});
+      setSelectedSchoolsDistBetween(Math.round(averagedistanceCalcMultiPoints(coords, "degrees")));
+      setSelectedSchoolsDistFromCenter(Math.round(avgDistanceFromCenter(coords)));
+    } else {
+      setGeoCenter([null, null]);
+      setSelectedSchoolsDistBetween(0);
+      setSelectedSchoolsDistFromCenter(0);
+      setCapital(null);
+    }
   }, [selectedSchools])
 
   return (
@@ -869,6 +904,14 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
                               <td className='conference-details-item'>
                                 {selectedSchools.length > 1 ? selectedSchoolsDistFromCenter : 0} miles</td>
                             </tr>
+                            <tr>
+                              <td className='conference-details-category'>
+                                Capital
+                              </td>
+                              <td className='conference-details-item'>
+                                {capital ? `${capital.city}, ${capital.state}` : 'N/A'}
+                              </td>
+                            </tr>
                           </tbody>
                         </table>
                         <div className='custom-conf-submit-button-container'>
@@ -927,6 +970,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
 function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceColors, selectedConferences, selectedYear, yearMapButtonHandler, chartData, ncaaConfObject }) {
   const [orderedConferences, setOrderedConferences] = useState([])
 
+  console.log(selectedConferences)
   useEffect(() => {
     let currentConferences = filteredConferenceList.map((conference) => conference.conference);
     let outOfRange = [];
@@ -1195,7 +1239,7 @@ function AutoScrollButton({ setAnimation, animate }) {
   )
 }
 
-function NavBar({ conferenceNames, historicalConferenceNames, selectConference, searchYears, conferenceLogosObject, sportHandler, selectedConferences, sport, preprogrammedAnimations, customConferences }) {
+function NavBar({ conferenceNames, historicalConferenceNames, selectConference, searchYears, conferenceLogosObject, sportHandler, selectedConferences, sport, preprogrammedAnimations, customConferences, selectCustomConference }) {
   
   return (
     <>
@@ -1374,9 +1418,13 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                   <button type='button' data-toggle="modal" data-target="#customConfPopup" className='nav-link custom-conf-button'>
                     Build Custom Conference
                   </button>
+                  <h6 className="dropdown-header">Your Conferences</h6>
+                  {customConferences.length === 0 ? <h6 className='dropdown-header' style={{ fontStyle: 'italic',}}>None</h6> : null}
                   {customConferences.map((conf) => (
                     <li key={conf.name} className='dropdown-item'>
-                      <button onClick={selectConference} className='dropdown-item' data-conf-name={conf.name}>
+                      <button onClick={(e) => { e.stopPropagation(); selectCustomConference(e) }}
+                        className='dropdown-item' 
+                        data-conf-name={conf.name}>
                         {conf.name}
                       </button>
                     </li>
