@@ -1,3 +1,4 @@
+import React from 'react'
 import { useEffect, useState, useRef, Fragment } from 'react'
 import './App.css'
 import axios from 'axios'
@@ -17,7 +18,13 @@ import Draggable from 'react-draggable';
 import { Line } from 'react-chartjs-2';
 import Chart from "chart.js/auto";
 import { CategoryScale, plugins } from "chart.js";
-import { averageDistanceCalc, pointToPointCalc, calculateConvexHull } from './distances';
+import {
+  averageDistanceCalc,
+  pointToPointCalc,
+  calculateConvexHull,
+  averagedistanceCalcMultiPoints,
+  avgDistanceFromCenter
+} from './distances';
 
 Chart.register(CategoryScale);
 
@@ -92,6 +99,7 @@ function App() {
   const [confCountrySize, setConfCountrySize] = useState(100)
 
   const [conferenceNames, setConferenceNames] = useState(["SEC", "Big Ten", "ACC", "Big 12", "Pac 12", "Mountain West", "Sun Belt", "CUSA", "MAC", "AAC", "Big East", "NCAA"])
+  const [conferenceObjects, setConferenceObjects] = useState([])
   const [historicalConferenceNames, setHistoricalConferenceNames] = useState(["SWC", "Big Eight", "WAC", "Big West", "Skyline", "Border"])
   const [selectedConferences, setSelectedConferences] = useState([])
   const [conferenceYears, setConferenceYears] = useState([])
@@ -100,6 +108,7 @@ function App() {
   const [splitConference, setSplitConference] = useState(false)
 
   const [customConferenceMode, setCustomConferenceMode] = useState(false)
+  const [customConfs, setCustomConfs] = useState([])
 
   { /* API Calls */ }
   const getConferences = async () => {
@@ -121,18 +130,50 @@ function App() {
 
       setSelectedYear(1932)
 
-      const logoResponse = await axios.get(APIURL + '/api/conferencelogos/')
+      const conferencesResponse = await axios.get(APIURL + '/api/conferences/')
       let logos = {};
       let colors = {};
-      logoResponse.data.forEach((logo) => {
-        logos[logo.name] = logo.logo;
-        colors[logo.name] = logo.colors;
+      let modernConfs = []
+      let historicalConfs = []
+      conferencesResponse.data.forEach((conf) => {
+        if (conferenceNames.includes(conf.name)) {
+          modernConfs.push(conf)
+        } else {
+          historicalConfs.push(conf)
+        }
+      });
+      const sortedModernConferences = modernConfs.sort((a, b) => {
+        const indexA = conferenceNames.indexOf(a.name);
+        const indexB = conferenceNames.indexOf(b.name);
+        if (indexA > indexB) {
+          return 1;
+        }
+        if (indexA < indexB) {
+          return -1;
+        }
+        return 0;
+      });
+      const sortedHistoricalConferences = historicalConfs.sort((a, b) => {
+        const indexA = historicalConferenceNames.indexOf(a.name);
+        const indexB = historicalConferenceNames.indexOf(b.name);
+        if (indexA > indexB) {
+          return 1;
+        }
+        if (indexA < indexB) {
+          return -1;
+        }
+        return 0;
+      });
+      setConferenceObjects([...sortedModernConferences, ...sortedHistoricalConferences]);
+      conferencesResponse.data.forEach((conf) => {
+        logos[conf.name] = conf.logo;
+        colors[conf.name] = conf.colors;
+
       });
       setConferenceLogos(logos);
       setConferenceColors(colors);
-      console.log(colors)
 
-      const confIconsPromises = logoResponse.data.map(async (logo) => {
+      const confIconsPromises = conferencesResponse.data.map(async (logo) => {
         const dimensions = await getImageDimmensions(logo.logo, CONFLOGOSIZE);
         return { name: logo.name, icon: L.icon({ iconUrl: logo.logo, iconSize: dimensions }) };
       });
@@ -267,8 +308,6 @@ function App() {
 
       createSummaryConf(selectedYear, sport, currentAvgDistanceBetweenNCAA, currentAvgDistanceFromCenterNCAA)
 
-      console.log(summaryStatsConfObject)
-
       setChartData(conferenceCharts);
     };
     setCharts().catch(console.error);
@@ -328,7 +367,6 @@ function App() {
     setAnimate(false)
     const button = e.target.closest('button');
     const conferenceName = button.getAttribute('data-conf-name');
-    console.log(conferenceName)
     let newConferenceList = []
     switch (conferenceName) {
       case 'Power 5':
@@ -488,7 +526,6 @@ function App() {
     });
     years.sort()
     setConferenceYears(years)
-    console.log(selectedYear)
     years.includes(Number(selectedYear)) ? conferenceFilter() : setSelectedYear(years[0])
   }, [selectedConferences])
 
@@ -560,6 +597,11 @@ function App() {
     setCustomConferenceMode(!customConferenceMode)
   }
 
+const handleCustomConfs = (conf) => {
+    let customConfsNew = [...customConfs, conf]; 
+    setCustomConfs(customConfsNew);
+}
+
   var myIcon = L.icon({
     iconUrl: APIURL + '/media/images/conf_logos/ncaa.png',
     iconSize: [10, 10],
@@ -574,7 +616,17 @@ function App() {
         </div>
         :
         <>
+        {console.log(customConfs)}
           <img src={sport == 'football' ? AWSBUCKET + 'static/dist/images/football_backdrop.jpg' : AWSBUCKET + 'static/dist/images/basketball_backdrop.webp'} className='backdrop' />
+          <BuildConferencePopUp
+            conferenceNames={conferenceNames}
+            historicalConferenceNames={historicalConferenceNames}
+            schools={allSchools}
+            setCustomConferenceMode={handleCustomConfMode}
+            confLogos={conferenceLogos}
+            allConferences={conferenceList}
+            confObjects={conferenceObjects}
+            customConfsHandler={handleCustomConfs} />
           <div className='main-app-container'>
             <NavBar conferenceNames={conferenceNames}
               historicalConferenceNames={historicalConferenceNames}
@@ -588,8 +640,7 @@ function App() {
               selectedConferences={selectedConferences}
               sport={sport}
               preprogrammedAnimations={preprogrammedAnimationsHandler}
-              customConfModeHandler={handleCustomConfMode} />
-            {customConferenceMode && <BuildConferencePopUp conferenceNames={conferenceNames} historicalConferenceNames={historicalConferenceNames} schools={allSchools} />}
+              customConferences={customConfs} />
             <div className='row map-chart-row'>
               <div className='col-12 col-md-7'>
                 <div className="map-container">
@@ -646,9 +697,20 @@ function App() {
   )
 }
 
-function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, schools }) {
+function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, schools, confLogos, allConferences, confObjects, customConfsHandler }) {
   schools = schools.sort((a, b) => a.name.localeCompare(b.name))
   const [selectedSchools, setSelectedSchools] = useState([])
+  const [selectedSchoolsCoords, setSelectedSchoolsCoords] = useState([])
+  const [selectedSchoolsDistBetween, setSelectedSchoolsDistBetween] = useState(0)
+  const [selectedSchoolsDistFromCenter, setSelectedSchoolsDistFromCenter] = useState(0)
+  const [selectedYear, setSelectedYear] = useState(2024)
+  const [selectedConf, setSelectedConf] = useState(null)
+  const [availablConfs, setAvailableConfs] = useState([])
+  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [confName, setConfName] = useState('')
+
+
+  const allYears = Array.from({ length: 2025 - 1896 }, (_, i) => 1896 + i);
 
   const addSchoolHandler = (e) => {
     const button = e.target.closest('button');
@@ -663,92 +725,203 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
     setSelectedSchools(selectedSchools.filter((school) => school.name !== schoolName))
   }
 
-  return (
-    <div className='build-conference-popup'>
-      <div className='build-conference-popup-content'>
-        <h2>Build Your Own Conference</h2>
-        <div className='row'>
-          <div className='col-12 col-md-6'>
-            <div className='conference-list'>
-              <h3>Current Conferences</h3>
-              {conferenceNames.map((conference) => (
-                <button>{conference}</button>
-              ))}
-              <h3>Historical Conferences</h3>
-              {historicalConferenceNames.map((conference) => (
-                <button>{conference}</button>
-              ))}
-            </div>
-          </div>
-          <div className='col-12 col-md-6'>
-            <h3>Conference Details</h3>
-            <div className='conference-details-specific'>
-              <table className='conference-details-table'>
-                <tbody>
-                  <tr>
-                    <td className='conference-details-category'>Number of Schools</td>
-                    <td className='conference-details-item'>{selectedSchools.length}</td>
-                  </tr>
-                  <tr>
-                    <td className='conference-details-category'>
-                      <span className="conference-details-color-square"></span>
-                      Avg. Distance Between Schools
-                    </td>
-                    <td className='conference-details-item'>0 miles</td>
-                  </tr>
-                  <tr>
-                    <td className='conference-details-category'>
-                      <span className="conference-details-color-square"></span>
-                      Avg. Distance from GeoCenter
-                    </td>
-                    <td className='conference-details-item'>0 miles</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div className='row'>
-          <div className='col-12 col-md-6'>
-            <h3>Schools</h3>
-            <div className='school-list'>
-              <table className='school-table'>
-                <tbody>
-                  {schools.map((school) => (
-                    <button onClick={addSchoolHandler} data-team-name={school.name} className='team-list-table-row-button'>
-                      <tr key={school.id} className='team-list-table-row'>
-                        <td><img src={school.logo} alt={school.name} className='team-list-schoollogo' /></td>
-                        <td>{school.name}</td>
-                        <td>{school.city}, {school.state}</td>
-                      </tr>
-                    </button>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div className='col-12 col-md-6'>
-            <h3>Selected Schools</h3>
-            <div className='school-list'>
-              <table className='school-table'>
-                <tbody>
-                  {selectedSchools.map((school) => (
-                    <tr key={school.id} className='custom-team-list-table-row'>
-                      <td><img src={school.logo} alt={school.name} className='custom-team-list-schoollogo' /></td>
-                      <td>{school.name}</td>
-                      <td>{school.city}, {school.state}</td>
-                      <td><button onClick={removeSchoolHandler} className='remove-button' data-team-name={school.name}>Remove</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div >
-  )
+  const selectedYearHandler = (year) => {
+    setSelectedYear(year)
+  }
 
+  const selectedConfHandler = (e) => {
+    const button = e.target.closest('button');
+    const confName = button.getAttribute('data-conf-name');
+    setSelectedConf(confName)
+  }
+
+  const buildConferenceHandler = () => {
+    let confObject = {
+      id: 0,
+      year: selectedYear,
+      conference: selectedConf,
+      football: true,
+      basketball: true,
+      schools: selectedSchools,
+      avgDistanceBetweenSchools: selectedSchoolsDistBetween,
+      avgDistanceFromCenter: selectedSchoolsDistFromCenter,
+      name: confName,
+      custom: true
+    }
+    customConfsHandler(confObject)
+    setSelectedSchools([])
+    setSelectedConf(null)
+    document.querySelector('.close-button').click();
+  }
+
+  const updateConfName = (e) => {
+    setConfName(e.target.value)
+  }
+
+  useEffect(() => {
+    let currentConfs = [
+      ...conferenceNames.filter(conference => conference.firstYear <= selectedYear && conference.lastYear >= selectedYear),
+      ...historicalConferenceNames.filter(conference => conference.firstYear <= selectedYear && conference.lastYear >= selectedYear)
+    ];
+    console.log(currentConfs)
+    setAvailableConfs(currentConfs)
+  }, [])
+
+  useEffect(() => {
+    if (selectedConf === null) {
+      return
+    }
+
+    const currentConf = confObjects.filter(conference => conference.name === selectedConf)[0]
+
+    if (currentConf.firstYear > selectedYear || currentConf.lastYear < selectedYear) {
+      return
+    }
+
+    let confSchools = allConferences.filter((conference) => conference.conference === selectedConf && conference.year === selectedYear)[0].schools
+    let schools = []
+    confSchools.map((school) => {
+      schools.push(school)
+    })
+    setSelectedSchools(schools)
+
+    let currentConfs = [
+      ...confObjects.filter(conference => conference.firstYear <= selectedYear && conference.lastYear >= selectedYear),
+      ...confObjects.filter(conference => conference.firstYear <= selectedYear && conference.lastYear >= selectedYear)
+    ];
+    setAvailableConfs(currentConfs)
+  }, [selectedYear, selectedConf])
+
+  useEffect(() => {
+    let coords = [];
+    console.log(selectedSchools)
+    selectedSchools.map((school) => {
+      coords.push([Number(school.latitude), Number(school.longitude)])
+    });
+    setSelectedSchoolsCoords(coords)
+    coords.length > 1 ? setSelectedSchoolsDistBetween(Math.round(averagedistanceCalcMultiPoints(coords, "degrees"))) : 0
+    coords.length > 1 ? setSelectedSchoolsDistFromCenter(Math.round(avgDistanceFromCenter(coords))) : 0
+  }, [selectedSchools])
+
+  return (
+    <>
+      {
+        isModalOpen && (
+          <div className='modal fade' id='customConfPopup' tabindex="-1" role="dialog" aria-labelledby="customConfPopupLabel" aria-hidden="true">
+            <div className="modal-dialog" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <div className='close-button-container'>
+                    <button type='button' className='close-button' data-dismiss="modal" aria-label="Close">X</button>
+                  </div>
+                  <h2 className='modal-title'>Build Your Own Conference</h2>
+                </div>
+                <div className="modal-body">
+                  <div className='row'>
+                    <div className='col-12 col-md-6'>
+                      <div className='conference-list'>
+                        <h4>Existing Conferences</h4>
+                        <p>You can use a current or historical conference alignment as a blueprint.
+                          Just select a conference and year to get started</p>
+                        <DraggableTimeline
+                          years={allYears}
+                          setYear={selectedYearHandler}
+                          selectedYear={selectedYear}
+                          redraw={false}
+                          setRedraw={() => { }}
+                          setAnimate={() => { }} />
+                        <div className='custom-conf-img-bay'>
+                          {confObjects.map((conference) => (
+                            conference.name !== 'NCAA' &&
+                            <button
+                              className='custom-conf-img-button'
+                              data-conf-name={conference.name}
+                              onClick={selectedConfHandler}
+                              disabled={!(conference.firstYear <= selectedYear && conference.lastYear >= selectedYear)}>
+                              <img src={conference.logo} alt={conference.name}
+                                className={!(conference.firstYear <= selectedYear && conference.lastYear >= selectedYear) ? 'custom-conference-selection-img gray-out' : 'custom-conference-selection-img'} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className='col-12 col-md-6'>
+                      <h3><input type='text' placeholder='Your Conference Name Here' onChange={updateConfName}></input></h3>
+                      <div className='conference-details-specific'>
+                        <table className='conference-details-table'>
+                          <tbody>
+                            <tr>
+                              <td className='conference-details-category'>Number of Schools</td>
+                              <td className='conference-details-item'>{selectedSchools.length}</td>
+                            </tr>
+                            <tr>
+                              <td className='conference-details-category'>
+                                Avg. Distance Between Schools
+                              </td>
+                              <td className='conference-details-item'>
+                                {selectedSchools.length > 1 ? selectedSchoolsDistBetween : 0} miles
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className='conference-details-category'>
+                                Avg. Distance from GeoCenter
+                              </td>
+                              <td className='conference-details-item'>
+                                {selectedSchools.length > 1 ? selectedSchoolsDistFromCenter : 0} miles</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div className='custom-conf-submit-button-container'>
+                          <button onClick={buildConferenceHandler} className='custom-conf-submit-button'>Build Conference</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='row school-list-row'>
+                    <div className='col-12 col-md-6'>
+                      <h3>Schools</h3>
+                      <div className='school-list'>
+                        <table className='school-table'>
+                          <tbody>
+                            {schools.map((school) => (
+                              <button onClick={addSchoolHandler} data-team-name={school.name} className='team-list-table-row-button'>
+                                <tr key={school.id} className='team-list-table-row'>
+                                  <td><img src={school.logo} alt={school.name} className='team-list-schoollogo' /></td>
+                                  <td>{school.name}</td>
+                                  <td>{school.city}, {school.state}</td>
+                                </tr>
+                              </button>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div className='col-12 col-md-6'>
+                      <h3>Selected Schools</h3>
+                      <div className='school-list'>
+                        <table className='school-table'>
+                          <tbody>
+                            {selectedSchools.map((school) => (
+                              <tr key={school.id} className='custom-team-list-table-row'>
+                                <td><img src={school.logo} alt={school.name} className='custom-team-list-schoollogo' /></td>
+                                <td>{school.name}</td>
+                                <td>{school.city}, {school.state}</td>
+                                <td><button onClick={removeSchoolHandler} className='remove-button' data-team-name={school.name}>Remove</button></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div >
+        )
+      }
+    </>
+  )
 }
 
 function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceColors, selectedConferences, selectedYear, yearMapButtonHandler, chartData, ncaaConfObject }) {
@@ -884,10 +1057,8 @@ function TeamList({ filteredConferenceList, conferenceLogosObject, schoolIcons }
 function SchoolDetails({ school, schoolIcons, conferenceEra, selectTeamHandler }) {
   let otherSchools = conferenceEra.schools.filter((schoolObject) => schoolObject.name !== school.name);
   let otherSchoolCoord = otherSchools.map((schoolObject) => [schoolObject.latitude, schoolObject.longitude]);
-  console.log(otherSchoolCoord.length);
   let schoolCoord = [school.latitude, school.longitude];
   let capitalCoord = [conferenceEra.capital.latitude, conferenceEra.capital.longitude];
-  console.log(capitalCoord);
   let avgDistance = averageDistanceCalc(schoolCoord, otherSchoolCoord, "degrees");
   let distanceToCapital = pointToPointCalc(schoolCoord[0], schoolCoord[1], capitalCoord[0], capitalCoord[1], "degrees");
 
@@ -1024,7 +1195,8 @@ function AutoScrollButton({ setAnimation, animate }) {
   )
 }
 
-function NavBar({ conferenceNames, historicalConferenceNames, selectConference, searchYears, conferenceLogosObject, sportHandler, selectedConferences, sport, preprogrammedAnimations, customConfModeHandler }) {
+function NavBar({ conferenceNames, historicalConferenceNames, selectConference, searchYears, conferenceLogosObject, sportHandler, selectedConferences, sport, preprogrammedAnimations, customConferences }) {
+  
   return (
     <>
       <nav className="navbar navbar-main navbar-expand-lg" >
@@ -1193,10 +1365,23 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                   </li>
                 </ul>
               </li>
-              <li className='nav-item'>
-                <button onClick={customConfModeHandler} className='nav-link custom-conf-button'>
-                  Build Custom Conference
-                </button>
+              <li className="nav-item dropdown">
+                <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Custom Conferences
+                </a>
+                <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <button type='button' data-toggle="modal" data-target="#customConfPopup" className='nav-link custom-conf-button'>
+                    Build Custom Conference
+                  </button>
+                  {customConferences.map((conf) => (
+                    <li key={conf.name} className='dropdown-item'>
+                      <button onClick={selectConference} className='dropdown-item' data-conf-name={conf.name}>
+                        {conf.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </li>
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
