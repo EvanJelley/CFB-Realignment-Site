@@ -1409,7 +1409,7 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                   </li>
                 </ul>
               </li>
-              <li className="nav-item dropdown">
+              {/* <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   Custom Conferences
@@ -1430,7 +1430,7 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                     </li>
                   ))}
                 </ul>
-              </li>
+              </li> */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
