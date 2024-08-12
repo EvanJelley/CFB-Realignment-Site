@@ -828,7 +828,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
     
     (async () => {
       try {
-        const filePath = 'src/majorCities.txt'; // Adjust the path as necessary
+        const filePath = AWSBUCKET + 'static/dist/assets/majorCities.txt'; // Adjust the path as necessary
         const csvData = await readCSVFile(filePath);
         setMajorCities(csvData);
       } catch (error) {
