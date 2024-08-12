@@ -778,10 +778,6 @@ body {
     outline: none;
 }
 
-.school-list-row {
-    margin-top: 1rem;
-}
-
 .conference-list {
     border: 1px solid rgb(107, 135, 165);
     border-radius: 20px;
@@ -810,4 +806,21 @@ body {
 .custom-conf-submit-button:hover {
     background-color: rgb(107, 135, 165);
     color: white;
+}
+
+.color-selector-container {
+    margin: 2rem 0;
+}
+
+.color-input {
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 50%;
+    margin: 0 .5rem;
+    background-color: inherit;
+}   
+
+.custom-conf-bottom-row {
+    margin-top: 1rem;
 }

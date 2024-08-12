@@ -27,6 +27,7 @@ import {
   calculateGeoCenter,
   findCapital,
 } from './distances';
+import Papa from 'papaparse';
 
 Chart.register(CategoryScale);
 
@@ -600,20 +601,23 @@ function App() {
     setCustomConferenceMode(!customConferenceMode)
   }
 
-const handleCustomConfs = (conf) => {
-    let customConfsNew = [...customConfs, conf]; 
+  const handleCustomConfs = (conf) => {
+    let customConfsNew = [...customConfs, conf];
     setCustomConfs(customConfsNew);
-}
+  }
 
-const handleSelectCustomConfs = (conf) => {
+  const handleSelectCustomConfs = (e) => {
     let selectedCustomConfsNew = [];
+    const button = e.target.closest('button');
+    const confName = button.getAttribute('data-conf-name');
+    const conf = customConfs.filter((customConf) => customConf.conference === confName)[0];
     if (selectedCustomConfs.includes(conf)) {
       selectedCustomConfsNew = selectedCustomConfs.filter((selectedConf) => selectedConf !== conf);
     } else {
       selectedCustomConfsNew = [...selectedCustomConfs, conf];
     }
     setSelectedCustomConfs(selectedCustomConfsNew);
-}
+  }
 
   var myIcon = L.icon({
     iconUrl: APIURL + '/media/images/conf_logos/ncaa.png',
@@ -629,7 +633,6 @@ const handleSelectCustomConfs = (conf) => {
         </div>
         :
         <>
-        {console.log(customConfs)}
           <img src={sport == 'football' ? AWSBUCKET + 'static/dist/images/football_backdrop.jpg' : AWSBUCKET + 'static/dist/images/basketball_backdrop.webp'} className='backdrop' />
           <BuildConferencePopUp
             conferenceNames={conferenceNames}
@@ -654,7 +657,7 @@ const handleSelectCustomConfs = (conf) => {
               sport={sport}
               preprogrammedAnimations={preprogrammedAnimationsHandler}
               customConferences={customConfs}
-              selectCustomConferences={handleSelectCustomConfs} />
+              selectCustomConference={handleSelectCustomConfs} />
             <div className='row map-chart-row'>
               <div className='col-12 col-md-7'>
                 <div className="map-container">
@@ -665,8 +668,8 @@ const handleSelectCustomConfs = (conf) => {
                     mapElements={mapDisplay}
                     confColors={conferenceColors}
                     countryOpacity={confCountryOpacity}
-                    confCountrySize={confCountrySize} 
-                    customConferences={selectedCustomConfs}/>
+                    confCountrySize={confCountrySize}
+                    customConferences={selectedCustomConfs} />
                   <DraggableTimeline
                     years={conferenceYears}
                     setYear={selectYearHandler}
@@ -725,8 +728,18 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
   const [confName, setConfName] = useState('')
   const [GeoCenter, setGeoCenter] = useState([null, null])
   const [capital, setCapital] = useState(null)
+  const [colors, setColors] = useState({ "dark": "#000000", "main": "#CC2E28", "light": "#588AAE" })
+  const [majorCities, setMajorCities] = useState(null)
 
   const allYears = Array.from({ length: 2025 - 1896 }, (_, i) => 1896 + i);
+
+  const handleColorChange = (e) => {
+    const { name, value } = e.target;
+    setColors((prevColors) => ({
+      ...prevColors,
+      [name]: value,
+    }));
+  };
 
   const addSchoolHandler = (e) => {
     const button = e.target.closest('button');
@@ -766,6 +779,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
       centerLat: GeoCenter[0],
       centerLon: GeoCenter[1],
       capital: capital,
+      colors: colors,
     }
     customConfsHandler(confObject)
     setSelectedSchools([])
@@ -782,8 +796,46 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
       ...conferenceNames.filter(conference => conference.firstYear <= selectedYear && conference.lastYear >= selectedYear),
       ...historicalConferenceNames.filter(conference => conference.firstYear <= selectedYear && conference.lastYear >= selectedYear)
     ];
-    console.log(currentConfs)
     setAvailableConfs(currentConfs)
+
+    async function readCSVFile(filePath) {
+      const response = await fetch(filePath);
+      const csvText = await response.text();
+    
+      return new Promise((resolve, reject) => {
+        Papa.parse(csvText, {
+          header: true,
+          dynamicTyping: true,
+          complete: (results) => {
+            resolve(results.data);
+          },
+          error: (error) => {
+            reject(error);
+          },
+        });
+      });
+    }
+    
+    function convertToCityObjects(data) {
+      return data.map((item, index) => ({
+        id: index + 1,
+        city: item.city,
+        state: item.state,
+        latitude: item.latitude,
+        longitude: item.longitude,
+      }));
+    }
+    
+    (async () => {
+      try {
+        const filePath = 'src/majorCities.txt'; // Adjust the path as necessary
+        const csvData = await readCSVFile(filePath);
+        setMajorCities(csvData);
+      } catch (error) {
+        console.error('Error reading or parsing the CSV file:', error);
+      }
+    })();
+
   }, [])
 
   useEffect(() => {
@@ -813,7 +865,6 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
 
   useEffect(() => {
     let coords = [];
-    console.log(selectedSchools)
     selectedSchools.map((school) => {
       coords.push([Number(school.latitude), Number(school.longitude)])
     });
@@ -821,13 +872,10 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
     if (coords.length > 1) {
       let center = calculateGeoCenter(coords)
       setGeoCenter(center);
-      let capital = findCapital(center);
-      setCapital({
-        'city': capital[0],
-        'state': capital[1],
-        'latitutde': capital[2],
-        'longitude': capital[3],
-        'id': capital[4]});
+      console.log(majorCities)
+      let capital = findCapital(center, majorCities);
+      console.log(capital)
+      setCapital(capital);
       setSelectedSchoolsDistBetween(Math.round(averagedistanceCalcMultiPoints(coords, "degrees")));
       setSelectedSchoolsDistFromCenter(Math.round(avgDistanceFromCenter(coords)));
     } else {
@@ -852,7 +900,46 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
                   <h2 className='modal-title'>Build Your Own Conference</h2>
                 </div>
                 <div className="modal-body">
-                  <div className='row'>
+
+                  <div className='row school-list-row'>
+                    <div className='col-12 col-md-6'>
+                      <h3>Schools</h3>
+                      <div className='school-list'>
+                        <table className='school-table'>
+                          <tbody>
+                            {schools.map((school) => (
+                              <button onClick={addSchoolHandler} data-team-name={school.name} className='team-list-table-row-button'>
+                                <tr key={school.id} className='team-list-table-row'>
+                                  <td><img src={school.logo} alt={school.name} className='team-list-schoollogo' /></td>
+                                  <td>{school.name}</td>
+                                  <td>{school.city}, {school.state}</td>
+                                </tr>
+                              </button>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div className='col-12 col-md-6'>
+                      <h3>Selected Schools</h3>
+                      <div className='school-list'>
+                        <table className='school-table'>
+                          <tbody>
+                            {selectedSchools.map((school) => (
+                              <tr key={school.id} className='custom-team-list-table-row'>
+                                <td><img src={school.logo} alt={school.name} className='custom-team-list-schoollogo' /></td>
+                                <td>{school.name}</td>
+                                <td>{school.city}, {school.state}</td>
+                                <td><button onClick={removeSchoolHandler} className='remove-button' data-team-name={school.name}>Remove</button></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='row custom-conf-bottom-row'>
                     <div className='col-12 col-md-6'>
                       <div className='conference-list'>
                         <h4>Existing Conferences</h4>
@@ -914,49 +1001,39 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
                             </tr>
                           </tbody>
                         </table>
+
+                        <div className='color-selector-container'>
+                          <h4>Conference Colors</h4>
+                          <div className='color-selectors'>
+                            <label className='color-label'>
+                              Main Color:
+                              <input
+                                type='color'
+                                name='main'
+                                value={colors.main}
+                                onChange={handleColorChange}
+                                className='color-input'
+                              />
+                            </label>
+                            <label className='color-label'>
+                              Light Color:
+                              <input
+                                type='color'
+                                name='light'
+                                value={colors.light}
+                                onChange={handleColorChange}
+                                className='color-input'
+                              />
+                            </label>
+                          </div>
+                        </div>
                         <div className='custom-conf-submit-button-container'>
                           <button onClick={buildConferenceHandler} className='custom-conf-submit-button'>Build Conference</button>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className='row school-list-row'>
-                    <div className='col-12 col-md-6'>
-                      <h3>Schools</h3>
-                      <div className='school-list'>
-                        <table className='school-table'>
-                          <tbody>
-                            {schools.map((school) => (
-                              <button onClick={addSchoolHandler} data-team-name={school.name} className='team-list-table-row-button'>
-                                <tr key={school.id} className='team-list-table-row'>
-                                  <td><img src={school.logo} alt={school.name} className='team-list-schoollogo' /></td>
-                                  <td>{school.name}</td>
-                                  <td>{school.city}, {school.state}</td>
-                                </tr>
-                              </button>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    <div className='col-12 col-md-6'>
-                      <h3>Selected Schools</h3>
-                      <div className='school-list'>
-                        <table className='school-table'>
-                          <tbody>
-                            {selectedSchools.map((school) => (
-                              <tr key={school.id} className='custom-team-list-table-row'>
-                                <td><img src={school.logo} alt={school.name} className='custom-team-list-schoollogo' /></td>
-                                <td>{school.name}</td>
-                                <td>{school.city}, {school.state}</td>
-                                <td><button onClick={removeSchoolHandler} className='remove-button' data-team-name={school.name}>Remove</button></td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -970,7 +1047,6 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
 function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceColors, selectedConferences, selectedYear, yearMapButtonHandler, chartData, ncaaConfObject }) {
   const [orderedConferences, setOrderedConferences] = useState([])
 
-  console.log(selectedConferences)
   useEffect(() => {
     let currentConferences = filteredConferenceList.map((conference) => conference.conference);
     let outOfRange = [];
@@ -1240,7 +1316,7 @@ function AutoScrollButton({ setAnimation, animate }) {
 }
 
 function NavBar({ conferenceNames, historicalConferenceNames, selectConference, searchYears, conferenceLogosObject, sportHandler, selectedConferences, sport, preprogrammedAnimations, customConferences, selectCustomConference }) {
-  
+
   return (
     <>
       <nav className="navbar navbar-main navbar-expand-lg" >
@@ -1409,7 +1485,7 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                   </li>
                 </ul>
               </li>
-              {/* <li className="nav-item dropdown">
+              <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   Custom Conferences
@@ -1419,18 +1495,18 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                     Build Custom Conference
                   </button>
                   <h6 className="dropdown-header">Your Conferences</h6>
-                  {customConferences.length === 0 ? <h6 className='dropdown-header' style={{ fontStyle: 'italic',}}>None</h6> : null}
+                  {customConferences.length === 0 ? <h6 className='dropdown-header' style={{ fontStyle: 'italic', }}>None</h6> : null}
                   {customConferences.map((conf) => (
                     <li key={conf.name} className='dropdown-item'>
                       <button onClick={(e) => { e.stopPropagation(); selectCustomConference(e) }}
-                        className='dropdown-item' 
-                        data-conf-name={conf.name}>
-                        {conf.name}
+                        className='dropdown-item'
+                        data-conf-name={conf.conference}>
+                        {conf.conference}
                       </button>
                     </li>
                   ))}
                 </ul>
-              </li> */}
+              </li>
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1568,7 +1644,7 @@ const DraggableTimeline = ({ years, setYear, selectedYear, redraw, setRedraw, se
   );
 };
 
-function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedConferences, mapElements, confColors, countryOpacity, confCountrySize }) {
+function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedConferences, mapElements, confColors, countryOpacity, confCountrySize, customConferences }) {
 
   const mapRef = useRef(null);
   const containerRef = useRef(null);
@@ -1583,6 +1659,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
     let newCoordObject = {};
     let conferenceCountryCoords = {};
     let newLineObject = {};
+    
     filteredConferenceList.map((conference) => {
       let coords = [];
       let linesToCenter = [];
@@ -1597,10 +1674,28 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
       newCoordObject[conference.conference] = coords;
       newLineObject[conference.conference] = linesToCenter;
     });
+
+    customConferences.map((conference) => {
+
+      const confCapitalCoords  = [Number(conference.capital.latitude), Number(conference.capital.longitude)];
+      let coords = [];
+      let linesToCenter = [];
+      conference.schools.map((school) => {
+        coords.push([Number(school.latitude), Number(school.longitude)]);
+        let lineToCenter = []
+        lineToCenter.push([Number(school.latitude), Number(school.longitude)]);
+        lineToCenter.push([Number(conference.centerLat), Number(conference.centerLon)]);
+        linesToCenter.push(lineToCenter)
+      });
+      conferenceCountryCoords[conference.conference] = calculateConvexHull(coords);
+      newCoordObject[conference.conference] = coords;
+      newLineObject[conference.conference] = linesToCenter;
+    });
+
     setConfCountryCoords(conferenceCountryCoords);
     setSchoolCoordinates(newCoordObject);
     setSchoolToCenterLines(newLineObject);
-  }, [filteredConferenceList]);
+  }, [filteredConferenceList, customConferences]);
 
   const calculateHeight = () => {
     if (width < 480) return 33;
@@ -1655,11 +1750,19 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
         mapStyles[conference] = {
           lineOptions: { color: confColors[conference].main, weight: "1", fill: true },
           circleOptions: { color: confColors[conference].light },
+          countryOptions: { color: confColors[conference].light, weight: "1", fill: true },
         };
       } catch (error) {
         console.log(error);
       }
     }
+    customConferences.map((conference) => {
+      mapStyles[conference.conference] = {
+        lineOptions: { color: conference.colors.light, weight: "1", fill: true },
+        circleOptions: { color: conference.colors.light },
+        countryOptions: { color: conference.colors.main, weight: "1", fill: true },
+      };
+    });
   });
 
   const standardLineOptions = { color: '#00254c', weight: "1", fill: true, };
@@ -1707,6 +1810,30 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
         ))
         )
         }
+        {customConferences.map((conference) => conference.schools.map((school) => (
+          <Fragment key={`${school.name}-${school.id}-custom`}>
+            {mapElements.teams ?
+              <Marker position={[Number(school.latitude), Number(school.longitude)]}
+                icon={schoolIcons[school.name] || myIcon} zIndexOffset={1000}>
+                <Popup>
+                  {school.name} - {school.city}, {school.state}
+                </Popup>
+              </Marker>
+              : null
+            }
+            {mapElements.schoolCircles ?
+              <Circle
+                center={[Number(school.latitude), Number(school.longitude)]}
+                pathOptions={{ ...mapStyles[conference.conference].circleOptions, fillOpacity: countryOpacity } || standardCircleOptions}
+                radius={CircleRadius}
+                stroke={false}
+              />
+              : null
+            }
+          </Fragment>
+        ))
+        )
+        }
         {mapElements.capitals && filteredConferenceList.map((conference) => (
           <Marker key={`${conference.capital.name}-${conference.id}`}
             position={[Number(conference.capital.latitude), Number(conference.capital.longitude)]}
@@ -1715,6 +1842,15 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
               Proposed {conference.conference} Capital: {conference.capital.name} - {conference.capital.state}
             </Popup>
           </Marker>
+          && customConferences.map((conference) => (
+            <Marker key={`${conference.capital.name}-${conference.id}-custom`}
+              position={[Number(conference.capital.latitude), Number(conference.capital.longitude)]}
+              zIndexOffset={500}>
+              <Popup>
+                Proposed {conference.conference} Capital: {conference.capital.name} - {conference.capital.state}
+              </Popup>
+            </Marker>
+          ))
         ))}
         {filteredConferenceList.map((conference) => (conference.schools.map((school) => (
           school.name.includes('Hawai') ?
@@ -1724,9 +1860,13 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
 
         {mapElements.lines && selectedConferences.map((conference) => (
           schoolToCenterLines[conference] && <Polyline pathOptions={mapStyles[conference].lineOptions || standardLineOptions} positions={schoolToCenterLines[conference]} />))}
+        {mapElements.lines && customConferences.map((conference) => (
+            schoolToCenterLines[conference.conference] && <Polyline pathOptions={mapStyles[conference.conference].lineOptions || standardLineOptions} positions={schoolToCenterLines[conference.conference]} />))}
 
         {mapElements.confCountry && selectedConferences.map((conference) => (
-          confCountryCoords[conference] && <Polygon pathOptions={{ ...mapStyles[conference].lineOptions, fillOpacity: countryOpacity || standardLineOptions }} positions={confCountryCoords[conference]} />))}
+          confCountryCoords[conference] && <Polygon pathOptions={{ ...mapStyles[conference].countryOptions, fillOpacity: countryOpacity || standardLineOptions }} positions={confCountryCoords[conference]} />))}
+        {mapElements.confCountry && customConferences.map((conference) => (
+          confCountryCoords[conference.conference] && <Polygon pathOptions={{ ...mapStyles[conference.conference].countryOptions, fillOpacity: countryOpacity || standardLineOptions }} positions={confCountryCoords[conference.conference]} />))}
       </MapContainer>
     </div>
   )
