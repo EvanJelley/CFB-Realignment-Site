@@ -174,13 +174,11 @@ function findCapital(geoCenter, cityObjects) {
     for (let i = 0; i < cityObjects.length; i++) {
         let city = cityObjects[i];
         let distance = pointToPointCalc(city.Latitude, city.Longitude, geoCenter[0], geoCenter[1], 'degrees');
-        console.log(distance, city.City, city.State);
         if (closestCity === null || distance < closestDist) {
             closestCity = city;
             closestDist = distance;
         }
     };
-    console.log(closestCity);
     return {city: closestCity.City, state: closestCity.State, latitude: closestCity.Latitude, longitude: closestCity.Longitude};
 }
 

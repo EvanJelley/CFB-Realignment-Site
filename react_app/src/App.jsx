@@ -123,6 +123,7 @@ function App() {
 
       let conferenceNameList = conferenceNames
       response.data.map((conference) => {
+        conference.custom = false;
         conferenceNameList.includes(conference.conference) || historicalConferenceNames.includes(conference.conference) ? null :
           conferenceNameList.push(conference.conference)
       });
@@ -199,6 +200,7 @@ function App() {
       schoolIconsArray.forEach(item => {
         schoolIcons[item.name] = item.icon;
       });
+      console.log(schoolIcons)
       setSchoolIcons(schoolIcons);
 
       const loadBallImages = async () => {
@@ -349,6 +351,7 @@ function App() {
       schools: schoolList,
       avgDistanceBetweenSchools: avgDistanceBetween,
       avgDistanceFromCenter: avgDistanceFromCenter,
+      custom: false,
     }
     setSummaryStatsConfObject(confObject)
   }
@@ -407,6 +410,7 @@ function App() {
     const animation = button.getAttribute('data-anim-name');
     switch (animation) {
       case 'All of CFB History':
+        setCustomConfs([]);
         setSelectedConferences(['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac 12', 'Mountain West', 'Sun Belt', 'CUSA', 'MAC', 'AAC', "SWC", "Big Eight", "WAC", "Big West", "Skyline", "Border"]);
         yearMapButtonHandler(1896);
         setMapDisplay({ teams: false, capitals: true, lines: true, confCountry: true, schoolCircles: false });
@@ -418,6 +422,7 @@ function App() {
         }, 2000);
         break;
       case 'Modern Expansion':
+        setCustomConfs([]);
         setSelectedConferences(['SEC', 'Big Ten', 'Big 12', 'Pac 12', 'ACC']);
         yearMapButtonHandler(2001);
         setMapDisplay({ teams: false, capitals: true, lines: true, confCountry: true, schoolCircles: false });
@@ -429,6 +434,7 @@ function App() {
         }, 2000);
         break;
       case 'Death of the Pac 12':
+        setCustomConfs([]);
         setSelectedConferences(['Pac 12', 'Big Ten', 'Big 12', 'ACC']);
         yearMapButtonHandler(2023);
         setMapDisplay({ teams: false, capitals: true, lines: true, confCountry: true, schoolCircles: false });
@@ -440,6 +446,7 @@ function App() {
         }, 2000);
         break;
       case 'CUSA & The Sun Belt: A Wild Ride':
+        setCustomConfs([]);
         setSelectedConferences(['CUSA', 'Sun Belt']);
         yearMapButtonHandler(1989);
         setMapDisplay({ teams: false, capitals: true, lines: true, confCountry: true, schoolCircles: false });
@@ -451,6 +458,7 @@ function App() {
         }, 2000);
         break
       case 'Big 2 since 32':
+        setCustomConfs([]);
         setSelectedConferences(['SEC', 'Big Ten']);
         yearMapButtonHandler(1932);
         setMapDisplay({ teams: false, capitals: true, lines: true, confCountry: true, schoolCircles: false });
@@ -462,6 +470,7 @@ function App() {
         }, 2000);
         break;
       case 'Truly Mid-American':
+        setCustomConfs([]);
         setSelectedConferences(['MAC']);
         yearMapButtonHandler(1946);
         setMapDisplay({ teams: true, capitals: false, lines: false, confCountry: true, schoolCircles: false });
@@ -473,6 +482,7 @@ function App() {
         }, 2000);
         break;
       case 'What is the Big 12?':
+        setCustomConfs([]);
         setSelectedConferences(['Big 12']);
         yearMapButtonHandler(1996);
         setMapDisplay({ teams: true, capitals: true, lines: true, confCountry: true, schoolCircles: false });
@@ -634,6 +644,8 @@ function App() {
         :
         <>
           <img src={sport == 'football' ? AWSBUCKET + 'static/dist/images/football_backdrop.jpg' : AWSBUCKET + 'static/dist/images/basketball_backdrop.webp'} className='backdrop' />
+
+          <AboutPopup />
           <BuildConferencePopUp
             conferenceNames={conferenceNames}
             historicalConferenceNames={historicalConferenceNames}
@@ -693,7 +705,7 @@ function App() {
                     setConfCountrySize={handleConfCountrySize} />
                 </div>
                 <div className='school-list-container'>
-                  <TeamList filteredConferenceList={filteredConferenceList} conferenceLogosObject={conferenceLogos} schoolIcons={schoolIcons} />
+                  <TeamList filteredConferenceList={filteredConferenceList} conferenceLogosObject={conferenceLogos} schoolIcons={schoolIcons} customConferences={selectedCustomConfs} />
                 </div>
               </div>
               <div className='col-12 col-md-5'>
@@ -705,7 +717,8 @@ function App() {
                   selectedYear={selectedYear}
                   yearMapButtonHandler={yearMapButtonHandler}
                   chartData={chartData}
-                  ncaaConfObject={summaryStatsConfObject} />
+                  ncaaConfObject={summaryStatsConfObject}
+                  customConferences={selectedCustomConfs} />
               </div>
             </div>
           </div>
@@ -784,7 +797,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
     customConfsHandler(confObject)
     setSelectedSchools([])
     setSelectedConf(null)
-    document.querySelector('.close-button').click();
+    document.querySelector('#customConfCloseButton').click();
   }
 
   const updateConfName = (e) => {
@@ -801,7 +814,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
     async function readCSVFile(filePath) {
       const response = await fetch(filePath);
       const csvText = await response.text();
-    
+
       return new Promise((resolve, reject) => {
         Papa.parse(csvText, {
           header: true,
@@ -815,7 +828,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
         });
       });
     }
-    
+
     function convertToCityObjects(data) {
       return data.map((item, index) => ({
         id: index + 1,
@@ -825,7 +838,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
         longitude: item.longitude,
       }));
     }
-    
+
     (async () => {
       try {
         const filePath = AWSBUCKET + 'static/dist/assets/majorCities.txt'; // Adjust the path as necessary
@@ -895,7 +908,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
               <div className="modal-content">
                 <div className="modal-header">
                   <div className='close-button-container'>
-                    <button type='button' className='close-button' data-dismiss="modal" aria-label="Close">X</button>
+                    <button id="customConfCloseButton" type='button' className='close-button' data-dismiss="modal" aria-label="Close">X</button>
                   </div>
                   <h2 className='modal-title'>Build Your Own Conference</h2>
                 </div>
@@ -1044,7 +1057,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
   )
 }
 
-function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceColors, selectedConferences, selectedYear, yearMapButtonHandler, chartData, ncaaConfObject }) {
+function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceColors, selectedConferences, selectedYear, yearMapButtonHandler, chartData, ncaaConfObject, customConferences }) {
   const [orderedConferences, setOrderedConferences] = useState([])
 
   useEffect(() => {
@@ -1104,11 +1117,21 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
           <Line data={chartData["NCAA"]} options={chartOptions} />
         </div>
       </div>
+      {customConferences.map((conf) => {
+        return (
+          <div className='ind-conf-detail-container' style={{ backgroundColor: `${conf.colors.light}10`, }}>
+            <ConferenceDetails
+              conference={conf}
+            />
+          </div>
+        )
+      })
+      }
     </div>
   )
 }
 
-function TeamList({ filteredConferenceList, conferenceLogosObject, schoolIcons }) {
+function TeamList({ filteredConferenceList, conferenceLogosObject, schoolIcons, customConferences }) {
   const [allTeams, setAllTeams] = useState([]);
   const [selectedTeams, setSelectedTeams] = useState([]);
 
@@ -1170,6 +1193,36 @@ function TeamList({ filteredConferenceList, conferenceLogosObject, schoolIcons }
           </div>
         </div>
       ))}
+      {customConferences.map((conference) => {
+        return (
+          <div className='team-list-conf'>
+            <div className='team-list-schools'>
+              <table className='team-list-table'>
+                <thead>
+                  <tr>
+                    <th>{conference.conference}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {conference.schools.map((school) => (
+                    <>
+                      {selectedTeams.includes(school.name) ? <SchoolDetails school={school} schoolIcons={schoolIcons} conferenceEra={conference} selectTeamHandler={selectTeamHandler} />
+                        :
+                        <button onClick={selectTeamHandler} data-team-name={school.name} className='team-list-table-row-button'>
+                          <tr key={school.id} className='team-list-table-row'>
+                            <td><img src={schoolIcons[school.name].options.iconUrl} alt={school.name} className='team-list-schoollogo' /></td>
+                            <td>{school.name}</td>
+                            <td>{school.city}, {school.state}</td>
+                          </tr>
+                        </button>}
+                    </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      )}
     </div>
   )
 }
@@ -1329,7 +1382,9 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
           <div className="collapse navbar-collapse" id="navbarSupportedContent" >
             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               <li className="nav-item">
-                <a className="nav-link" href="#">About</a>
+                <button id="aboutButton" type='button' data-toggle="modal" data-target="#aboutPopup" className='nav-link custom-conf-button'>
+                  About
+                </button>
               </li>
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
@@ -1507,20 +1562,6 @@ function NavBar({ conferenceNames, historicalConferenceNames, selectConference, 
                   ))}
                 </ul>
               </li>
-              <li className="nav-item dropdown">
-                <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  For Devs
-                </a>
-                <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <h6 className="dropdown-header">API</h6>
-                  <a className="dropdown-item" href="https://api.cfbrealignment.com/swagger/" target="_blank" rel="noopener noreferrer">Swagger</a>
-                  <a className="dropdown-item" href="https://api.cfbrealignment.com/redoc/" target="_blank" rel="noopener noreferrer">Redoc</a>
-                  <h6 className="dropdown-header">GitHub</h6>
-                  <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-API">API</a>
-                  <a className='dropdown-item' href="https://github.com/EvanJelley/CFB-Realignment-Site">Front-end</a>
-                </div>
-              </li>
 
             </ul>
           </div>
@@ -1659,7 +1700,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
     let newCoordObject = {};
     let conferenceCountryCoords = {};
     let newLineObject = {};
-    
+
     filteredConferenceList.map((conference) => {
       let coords = [];
       let linesToCenter = [];
@@ -1677,7 +1718,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
 
     customConferences.map((conference) => {
 
-      const confCapitalCoords  = [Number(conference.capital.latitude), Number(conference.capital.longitude)];
+      const confCapitalCoords = [Number(conference.capital.latitude), Number(conference.capital.longitude)];
       let coords = [];
       let linesToCenter = [];
       conference.schools.map((school) => {
@@ -1768,6 +1809,12 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
   const standardLineOptions = { color: '#00254c', weight: "1", fill: true, };
   const standardCircleOptions = { color: '#00254c', fillOpacity: 0.1 };
 
+  const genericIcon = L.icon({
+    iconUrl: AWSBUCKET + 'static/dist/images/FBicon.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 0],
+  });
+
   return (
     <div ref={containerRef}>
       <MapContainer
@@ -1842,15 +1889,15 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
               Proposed {conference.conference} Capital: {conference.capital.name} - {conference.capital.state}
             </Popup>
           </Marker>
-          && customConferences.map((conference) => (
-            <Marker key={`${conference.capital.name}-${conference.id}-custom`}
-              position={[Number(conference.capital.latitude), Number(conference.capital.longitude)]}
-              zIndexOffset={500}>
-              <Popup>
-                Proposed {conference.conference} Capital: {conference.capital.name} - {conference.capital.state}
-              </Popup>
-            </Marker>
-          ))
+        ))}
+        {mapElements.capitals && customConferences.map((conference) => (
+          <Marker key={`${conference.capital.name}-${conference.id}-custom`}
+            position={[Number(conference.capital.latitude), Number(conference.capital.longitude)]}
+            zIndexOffset={500} icon={genericIcon}>
+            <Popup>
+              Proposed {conference.conference} Capital: {conference.capital.city} - {conference.capital.state}
+            </Popup>
+          </Marker>
         ))}
         {filteredConferenceList.map((conference) => (conference.schools.map((school) => (
           school.name.includes('Hawai') ?
@@ -1861,7 +1908,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
         {mapElements.lines && selectedConferences.map((conference) => (
           schoolToCenterLines[conference] && <Polyline pathOptions={mapStyles[conference].lineOptions || standardLineOptions} positions={schoolToCenterLines[conference]} />))}
         {mapElements.lines && customConferences.map((conference) => (
-            schoolToCenterLines[conference.conference] && <Polyline pathOptions={mapStyles[conference.conference].lineOptions || standardLineOptions} positions={schoolToCenterLines[conference.conference]} />))}
+          schoolToCenterLines[conference.conference] && <Polyline pathOptions={mapStyles[conference.conference].lineOptions || standardLineOptions} positions={schoolToCenterLines[conference.conference]} />))}
 
         {mapElements.confCountry && selectedConferences.map((conference) => (
           confCountryCoords[conference] && <Polygon pathOptions={{ ...mapStyles[conference].countryOptions, fillOpacity: countryOpacity || standardLineOptions }} positions={confCountryCoords[conference]} />))}
@@ -1924,56 +1971,92 @@ const HawaiiMapOverlay = ({ school, schoolIcons, conference, lineOptions, circle
 function ConferenceDetails({ conference, confLogos, confColors, selectedConference, selectedYear, startYear, endYear, setYear, numberOfConf }) {
 
   return (conference ?
-    <div className='conference-details'>
-      <div className='conference-details-main'>
-        <h3 className='conference-details-conference'>
-          <span className='conference-details-category-header'>{conference.conference == "NCAA" ? "Summary Stats:" : "Conference:"}</span>
-          <img className='conference-details-conference-img' src={confLogos[conference.conference]} />
-        </h3>
-        <h3 className='conference-details-year'>
-          <span className='conference-details-category-header'>
-            Year:
-          </span>
-          <span className='conference-details-category-header-year'>
-            {conference.year}
-          </span>
-        </h3>
-      </div>
-      <div className='conference-details-specific'>
-        <table className='conference-details-table'>
-          <tbody>
-            {conference.conference !== "NCAA" ?
+    conference.custom ?
+      <div className='conference-details'>
+        <div className='conference-details-main'>
+          <h3 className='conference-details-conference' style={{ border: "none" }}>
+            <span className='conference-details-category-header'>Conference: </span>
+            <span>{conference.conference} (custom)</span>
+          </h3>
+        </div>
+        <div className='conference-details-specific'>
+          <table className='conference-details-table'>
+            <tbody>
               <tr>
                 <td className='conference-details-category'>Proposed Capital</td>
-                <td className='conference-details-item'>{conference.capital.name}, {conference.capital.state}</td>
+                <td className='conference-details-item'>{conference.capital.city}, {conference.capital.state}</td>
               </tr>
-              :
               <tr>
-                <td className='conference-details-category'>Number of Conferences</td>
-                <td className='conference-details-item'>{numberOfConf}</td>
-              </tr>}
-            <tr>
-              <td className='conference-details-category'>Number of Schools</td>
-              <td className='conference-details-item'>{conference.schools.length}</td>
-            </tr>
-            <tr>
-              <td className='conference-details-category'>
-                <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].main }}></span>
-                Avg. Distance Between Schools
-              </td>
-              <td className='conference-details-item'>{Math.round(conference.avgDistanceBetweenSchools)} miles</td>
-            </tr>
-            <tr>
-              <td className='conference-details-category'>
-                <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].light }}></span>
-                Avg. Distance from GeoCenter
-              </td>
-              <td className='conference-details-item'>{Math.round(conference.avgDistanceFromCenter)} miles</td>
-            </tr>
-          </tbody>
-        </table>
+                <td className='conference-details-category'>Number of Schools</td>
+                <td className='conference-details-item'>{conference.schools.length}</td>
+              </tr>
+              <tr>
+                <td className='conference-details-category'>
+                  Avg. Distance Between Schools
+                </td>
+                <td className='conference-details-item'>{Math.round(conference.avgDistanceBetweenSchools)} miles</td>
+              </tr>
+              <tr>
+                <td className='conference-details-category'>
+                  Avg. Distance from GeoCenter
+                </td>
+                <td className='conference-details-item'>{Math.round(conference.avgDistanceFromCenter)} miles</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+      :
+      <div className='conference-details'>
+        <div className='conference-details-main'>
+          <h3 className='conference-details-conference'>
+            <span className='conference-details-category-header'>{conference.conference == "NCAA" ? "Summary Stats:" : "Conference:"}</span>
+            <img className='conference-details-conference-img' src={confLogos[conference.conference]} />
+          </h3>
+          <h3 className='conference-details-year'>
+            <span className='conference-details-category-header'>
+              Year:
+            </span>
+            <span className='conference-details-category-header-year'>
+              {conference.year}
+            </span>
+          </h3>
+        </div>
+        <div className='conference-details-specific'>
+          <table className='conference-details-table'>
+            <tbody>
+              {conference.conference !== "NCAA" ?
+                <tr>
+                  <td className='conference-details-category'>Proposed Capital</td>
+                  <td className='conference-details-item'>{conference.capital.name}, {conference.capital.state}</td>
+                </tr>
+                :
+                <tr>
+                  <td className='conference-details-category'>Number of Conferences</td>
+                  <td className='conference-details-item'>{numberOfConf}</td>
+                </tr>}
+              <tr>
+                <td className='conference-details-category'>Number of Schools</td>
+                <td className='conference-details-item'>{conference.schools.length}</td>
+              </tr>
+              <tr>
+                <td className='conference-details-category'>
+                  <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].main }}></span>
+                  Avg. Distance Between Schools
+                </td>
+                <td className='conference-details-item'>{Math.round(conference.avgDistanceBetweenSchools)} miles</td>
+              </tr>
+              <tr>
+                <td className='conference-details-category'>
+                  <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].light }}></span>
+                  Avg. Distance from GeoCenter
+                </td>
+                <td className='conference-details-item'>{Math.round(conference.avgDistanceFromCenter)} miles</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     :
     <div className='conference-details'>
       <div className='conference-details-main'>
@@ -2010,5 +2093,93 @@ function ConferenceDetails({ conference, confLogos, confColors, selectedConferen
     </div>
   )
 };
+
+function AboutPopup() {
+  return (
+    <div className='modal fade' id='aboutPopup' tabindex="-1" role="dialog" aria-labelledby="aboutPopupLabel" aria-hidden="true">
+      <div className="modal-dialog" role="document">
+        <div className="modal-content about-container">
+          <div className="modal-header">
+            <div className='close-button-container'>
+              <button type='button' className='close-button' data-dismiss="modal" aria-label="Close">X</button>
+            </div>
+            <h2 className='modal-title'>About CFB Realignment Tool</h2>
+          </div>
+          <div className="modal-body">
+
+            <section>
+              <h2 className='about-header'>Understanding the Changing Landscape of College Football</h2>
+              <p>
+                In recent years, NCAA conference realignment has become one of the most significant topics in college football. Universities across the country have shifted alliances, driven by factors such as media rights deals, geographic considerations, and the pursuit of competitive advantages. These realignments have reshaped the conferences we’ve known for decades, creating a dynamic and ever-evolving landscape.
+              </p>
+            </section>
+
+            <section>
+              <h2 className='about-header'>Our Mission</h2>
+              <p>
+                CFB Realignment is designed to provide a comprehensive analysis and visualization of these changes. Whether you're a dedicated fan or a curious observer, our goal is to offer insights into how conferences are evolving, both geographically and competitively.
+              </p>
+            </section>
+
+            <section>
+              <h2 className='about-header'>Key Features of the Site</h2>
+              <ul>
+                <li>
+                  <strong>Interactive Mapping:</strong> Our site features a powerful interactive map that allows users to visualize the geographic distribution of NCAA conferences. With just a few clicks, you can see how conference boundaries have shifted over time, explore the locations of member institutions, and gain a clearer understanding of regional dynamics.
+                </li>
+                <li>
+                  <strong>Charting Realignments:</strong> Dive deeper into the data with our charting tools. We provide visualizations that highlight trends in conference realignment, including the movement of teams between conferences, the growth or contraction of conferences, and the implications of these changes on the college football landscape.
+                </li>
+                <li>
+                  <strong>Custom Conferences:</strong> Want to explore what a different alignment might look like? Our custom conference tool lets you create your own conference alignments, mixing and matching teams to see how your ideal conference would stack up. This feature is perfect for fans who enjoy theorizing about the "what-ifs" of college football.
+                </li>
+              </ul>
+            </section>
+
+          </div>
+
+          <div className="modal-footer">
+
+            <section className='about-for-devs'>
+              <h2 className='about-header'>For Developers</h2>
+              <p>
+                If you're interested in exploring the data behind the site, we offer a comprehensive API that provides access to all the information you see here. Our API is designed to be easy to use and well-documented, making it simple to integrate our data into your own projects. Whether you're a seasoned developer or just getting started, we invite you to explore the possibilities of our API and see what you can create.
+              </p>
+              <h4>API Documentation</h4>
+              <ul>
+                <li>
+                  <a href="https://api.cfbrealignment.com/swagger/" target="_blank" rel="noopener noreferrer">Swagger</a>
+                </li>
+                <li>
+                  <a href="https://api.cfbrealignment.com/redoc/" target="_blank" rel="noopener noreferrer">Redoc</a>
+                </li>
+              </ul>
+              <h4>GitHub Repositories</h4>
+              <ul>
+                <li>
+                  <a href="https://github.com/EvanJelley/CFB-Realignment-API" target="_blank" rel="noopener noreferrer">API</a>
+                </li>
+                <li>
+                  <a href="https://github.com/EvanJelley/CFB-Realignment-Site" target="_blank" rel="noopener noreferrer">Front-end</a>
+                </li>
+              </ul>
+            </section>
+
+
+
+            {/* <section>
+              <h2>Join the Conversation</h2>
+              <p>
+                CFB Realignment is more than just a data tool—it's a platform for fans to engage with one of the most exciting aspects of college football today. We invite you to explore the site, share your insights, and join the ongoing conversation about the future of college football.
+              </p>
+            </section> */}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 export default App

@@ -60,6 +60,11 @@ body {
 }
 
 /* Nav Styles */
+.nav-item:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 .navbar-main {
     background-color: rgb(0, 37, 76);
     color: white;
@@ -137,6 +142,12 @@ body {
 .custom-conf-button:focus {
     outline: none;
     box-shadow: none;
+}
+
+#aboutButton {
+    background-color: inherit;
+    color: inherit;
+    border: none;
 }
 
 /* Timeline Styles */
@@ -738,6 +749,7 @@ body {
 }
 
 .close-button {
+    font-family: "Montserrat", sans-serif;
     border: 1px solid rgb(107, 135, 165);
     width: 1.75rem;
     border-radius: 20px;
@@ -824,3 +836,20 @@ body {
 .custom-conf-bottom-row {
     margin-top: 1rem;
 }
+
+/* About Page */
+.about-container {
+    font-family: "Crimson Text", serif;
+}
+
+.about-for-devs {
+    font-family: "Montserrat", sans-serif;
+}
+
+.about-for-devs a {
+    color: inherit;
+}
+
+.about-for-devs a:hover {
+    text-decoration: underline;
+}   
