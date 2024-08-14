@@ -741,6 +741,25 @@ body {
     color: white;
 }
 
+.remove-all-button {
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 20px;
+    background-color: inherit;
+    color: rgb(107, 135, 165);
+    cursor: pointer;
+}
+
+.remove-all-button:hover {
+    background-color: rgb(107, 135, 165);
+    color: white;
+}
+
+.remove-all-button-container {
+    margin: 1rem;
+    font-size: medium;
+    position: relative;
+}
+
 .close-button-container {
     display: flex;
     justify-content: right;

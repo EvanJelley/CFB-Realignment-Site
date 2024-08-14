@@ -28,6 +28,7 @@ import {
   findCapital,
 } from './distances';
 import Papa from 'papaparse';
+import _ from 'lodash';
 
 Chart.register(CategoryScale);
 
@@ -200,7 +201,6 @@ function App() {
       schoolIconsArray.forEach(item => {
         schoolIcons[item.name] = item.icon;
       });
-      console.log(schoolIcons)
       setSchoolIcons(schoolIcons);
 
       const loadBallImages = async () => {
@@ -651,10 +651,10 @@ function App() {
             historicalConferenceNames={historicalConferenceNames}
             schools={allSchools}
             setCustomConferenceMode={handleCustomConfMode}
-            confLogos={conferenceLogos}
             allConferences={conferenceList}
             confObjects={conferenceObjects}
-            customConfsHandler={handleCustomConfs} />
+            customConfsHandler={handleCustomConfs}
+            currentCustomConferences={customConfs} />
           <div className='main-app-container'>
             <NavBar conferenceNames={conferenceNames}
               historicalConferenceNames={historicalConferenceNames}
@@ -728,7 +728,7 @@ function App() {
   )
 }
 
-function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, schools, confLogos, allConferences, confObjects, customConfsHandler }) {
+function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, schools, allConferences, confObjects, customConfsHandler, currentCustomConferences }) {
   schools = schools.sort((a, b) => a.name.localeCompare(b.name))
   const [selectedSchools, setSelectedSchools] = useState([])
   const [selectedSchoolsCoords, setSelectedSchoolsCoords] = useState([])
@@ -738,7 +738,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
   const [selectedConf, setSelectedConf] = useState(null)
   const [availablConfs, setAvailableConfs] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(true);
-  const [confName, setConfName] = useState('')
+  const [confName, setConfName] = useState(null)
   const [GeoCenter, setGeoCenter] = useState([null, null])
   const [capital, setCapital] = useState(null)
   const [colors, setColors] = useState({ "dark": "#000000", "main": "#CC2E28", "light": "#588AAE" })
@@ -767,6 +767,10 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
     setSelectedSchools(selectedSchools.filter((school) => school.name !== schoolName))
   }
 
+  const removeAllSchoolsHandler = () => {
+    setSelectedSchools([])
+  }
+
   const selectedYearHandler = (year) => {
     setSelectedYear(year)
   }
@@ -778,6 +782,8 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
   }
 
   const buildConferenceHandler = () => {
+    confName == null ? setConfName("Custom Conference" + currentCustomConferences.length + 1) : null
+
     let confObject = {
       id: 0,
       year: selectedYear,
@@ -787,7 +793,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
       schools: selectedSchools,
       avgDistanceBetweenSchools: selectedSchoolsDistBetween,
       avgDistanceFromCenter: selectedSchoolsDistFromCenter,
-      conference: confName,
+      conference: !confName ? "Custom Conference " + (currentCustomConferences.length + 1) : confName,
       custom: true,
       centerLat: GeoCenter[0],
       centerLon: GeoCenter[1],
@@ -827,16 +833,6 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
           },
         });
       });
-    }
-
-    function convertToCityObjects(data) {
-      return data.map((item, index) => ({
-        id: index + 1,
-        city: item.city,
-        state: item.state,
-        latitude: item.latitude,
-        longitude: item.longitude,
-      }));
     }
 
     (async () => {
@@ -885,9 +881,7 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
     if (coords.length > 1) {
       let center = calculateGeoCenter(coords)
       setGeoCenter(center);
-      console.log(majorCities)
       let capital = findCapital(center, majorCities);
-      console.log(capital)
       setCapital(capital);
       setSelectedSchoolsDistBetween(Math.round(averagedistanceCalcMultiPoints(coords, "degrees")));
       setSelectedSchoolsDistFromCenter(Math.round(avgDistanceFromCenter(coords)));
@@ -934,7 +928,10 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
                       </div>
                     </div>
                     <div className='col-12 col-md-6'>
-                      <h3>Selected Schools</h3>
+                      <h3>
+                        Selected Schools
+                        <span className='remove-all-button-container'><button onClick={removeAllSchoolsHandler} className='remove-all-button'>Remove All</button></span>
+                      </h3>
                       <div className='school-list'>
                         <table className='school-table'>
                           <tbody>
@@ -1059,6 +1056,27 @@ function BuildConferencePopUp({ conferenceNames, historicalConferenceNames, scho
 
 function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceColors, selectedConferences, selectedYear, yearMapButtonHandler, chartData, ncaaConfObject, customConferences }) {
   const [orderedConferences, setOrderedConferences] = useState([])
+  const [filteredChartData, setFilteredChartData] = useState(null)
+  const [avgDistanceBetween, setAvgDistanceBetween] = useState(true)
+  const [avgDistanceFromCenter, setAvgDistanceFromCenter] = useState(true)
+
+  useEffect(() => {
+    if (avgDistanceBetween && avgDistanceFromCenter) {
+      setFilteredChartData(_.cloneDeep(chartData))
+    } else if (avgDistanceBetween && !avgDistanceFromCenter) {
+      let newChartData = _.cloneDeep(chartData)
+      for (let conference in newChartData) {
+        newChartData[conference].datasets = newChartData[conference].datasets.filter((dataset) => dataset.label !== "Average Distance from Center")
+      }
+      setFilteredChartData(newChartData)
+    } else if (!avgDistanceBetween && avgDistanceFromCenter) {
+      let newChartData = _.cloneDeep(chartData)
+      for (let conference in newChartData) {
+        newChartData[conference].datasets = newChartData[conference].datasets.filter((dataset) => dataset.label !== "Average Distance Between Schools")
+      }
+      setFilteredChartData(newChartData)
+    }
+  }, [chartData, avgDistanceBetween, avgDistanceFromCenter])
 
   useEffect(() => {
     let currentConferences = filteredConferenceList.map((conference) => conference.conference);
@@ -1070,10 +1088,44 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
     setOrderedConferences([...current, ...outOfRange]);
   }, [filteredConferenceList, selectedConferences]);
 
+  function avgDistanceBetweenHandler() {
+    !avgDistanceFromCenter ? setAvgDistanceFromCenter(true) : setAvgDistanceBetween(!avgDistanceBetween)
+  }
+
+  function avgDistanceFromCenterHandler() {
+    !avgDistanceBetween ? setAvgDistanceBetween(true) : setAvgDistanceFromCenter(!avgDistanceFromCenter)
+  }
+
+
   return (
     <div className='chart-details-container'>
+      <div className='chart-details-options'>
+        <nav className="navbar map-controls" >
+          <div className="container-fluid ">
+            <li className="nav-item dropdown">
+              <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Chart Controls
+              </a>
+              <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+
+                <li className="nav-item">
+                  <button onClick={avgDistanceBetweenHandler} className='chart-control-button'>
+                    Avg. Distance Between Schools
+                  </button>
+                </li>
+                <li className="nav-item button-container">
+                  <button onClick={avgDistanceFromCenterHandler} className='chart-control-button'>
+                    Avg. Distance from Center
+                  </button>
+                </li>
+              </div>
+            </li>
+          </div>
+        </nav>
+      </div>
       {orderedConferences.map((conference) => {
-        if (!chartData[conference]) {
+        if (filteredChartData == null || !filteredChartData[conference]) {
           return <p key={conference}>Loading...</p>;
         }
         let startYear = Number(chartData[conference].labels[0]);
@@ -1085,9 +1137,11 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
               conference={filteredConferenceList.filter((conferenceObject) => conferenceObject.conference === conference)[0]}
               confLogos={conferenceLogos}
               confColors={conferenceColors}
-              selectedConference={conference} />
+              selectedConference={conference}
+              avgDistanceBetweenBoolean={avgDistanceBetween}
+              avgDistanceFromCenterBoolean={avgDistanceFromCenter} />
             <div className='chart-container'>
-              <Line data={chartData[conference]} options={chartOptions} />
+              {filteredChartData ? <Line data={filteredChartData[conference]} options={chartOptions} /> : null}
             </div>
           </div>
         ) : (
@@ -1100,7 +1154,9 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
               selectedYear={selectedYear}
               startYear={startYear}
               endYear={endYear}
-              setYear={yearMapButtonHandler} />
+              setYear={yearMapButtonHandler}
+              avgDistanceBetweenBoolean={avgDistanceBetween}
+              avgDistanceFromCenterBoolean={avgDistanceFromCenter} />
           </div>
         );
       })}
@@ -1112,9 +1168,11 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
           selectedConference={"NCAA"}
           selectedYear={selectedYear}
           numberOfConf={filteredConferenceList.length}
+          avgDistanceBetweenBoolean={avgDistanceBetween}
+          avgDistanceFromCenterBoolean={avgDistanceFromCenter}
         />
         <div className='chart-container'>
-          <Line data={chartData["NCAA"]} options={chartOptions} />
+          {filteredChartData ? <Line data={filteredChartData["NCAA"]} options={chartOptions} /> : null}
         </div>
       </div>
       {customConferences.map((conf) => {
@@ -1221,7 +1279,8 @@ function TeamList({ filteredConferenceList, conferenceLogosObject, schoolIcons, 
               </table>
             </div>
           </div>
-        )}
+        )
+      }
       )}
     </div>
   )
@@ -1263,22 +1322,21 @@ function SchoolDetails({ school, schoolIcons, conferenceEra, selectTeamHandler }
   )
 }
 
-function ChartControls({ setAnimation, animate, firstYear, lastYear, setYear }) {
+function ChartControls({ avgDistanceBetween, avgDistanceFromCenter, setAvgDistanceBetween, setAvgDistanceFromCenter }) {
   return (
-    <nav className="navbar chart-controls" >
+    <nav className="navbar" >
       <div className="container-fluid ">
-        <div className="nav-item button-container">
-          <button onClick={() => setYear(firstYear)} className='first-year-button'>
-            {firstYear}
+        <li className="nav-item drop">
+          <button onClick={setAvgDistanceBetween} className='chart-control-button'>
+            Avg. Distance Between Schools
           </button>
-          <button onClick={() => setYear(lastYear)} className='present-button'>
-            {lastYear}
+        </li>
+        <li className="nav-item button-container">
+          <button onClick={setAvgDistanceFromCenter} className='chart-control-button'>
+            Avg. Distance from Center
           </button>
-        </div>
-        <AutoScrollButton setAnimation={setAnimation} animate={animate} />
-        <div className='nav-item map-controls-button secondary-button'>
-          <button>...</button>
-        </div>
+        </li>
+
       </div>
     </nav>
   )
@@ -1968,7 +2026,7 @@ const HawaiiMapOverlay = ({ school, schoolIcons, conference, lineOptions, circle
   );
 };
 
-function ConferenceDetails({ conference, confLogos, confColors, selectedConference, selectedYear, startYear, endYear, setYear, numberOfConf }) {
+function ConferenceDetails({ conference, confLogos, confColors, selectedConference, selectedYear, startYear, endYear, setYear, numberOfConf, avgDistanceBetweenBoolean, avgDistanceFromCenterBoolean }) {
 
   return (conference ?
     conference.custom ?
@@ -1990,18 +2048,22 @@ function ConferenceDetails({ conference, confLogos, confColors, selectedConferen
                 <td className='conference-details-category'>Number of Schools</td>
                 <td className='conference-details-item'>{conference.schools.length}</td>
               </tr>
-              <tr>
-                <td className='conference-details-category'>
-                  Avg. Distance Between Schools
-                </td>
-                <td className='conference-details-item'>{Math.round(conference.avgDistanceBetweenSchools)} miles</td>
-              </tr>
-              <tr>
-                <td className='conference-details-category'>
-                  Avg. Distance from GeoCenter
-                </td>
-                <td className='conference-details-item'>{Math.round(conference.avgDistanceFromCenter)} miles</td>
-              </tr>
+              {avgDistanceBetweenBoolean ?
+                <tr>
+                  <td className='conference-details-category'>
+                    Avg. Distance Between Schools
+                  </td>
+                  <td className='conference-details-item'>{Math.round(conference.avgDistanceBetweenSchools)} miles</td>
+                </tr>
+                : null}
+              {avgDistanceFromCenterBoolean ?
+                <tr>
+                  <td className='conference-details-category'>
+                    Avg. Distance from GeoCenter
+                  </td>
+                  <td className='conference-details-item'>{Math.round(conference.avgDistanceFromCenter)} miles</td>
+                </tr>
+                : null}
             </tbody>
           </table>
         </div>
@@ -2039,20 +2101,24 @@ function ConferenceDetails({ conference, confLogos, confColors, selectedConferen
                 <td className='conference-details-category'>Number of Schools</td>
                 <td className='conference-details-item'>{conference.schools.length}</td>
               </tr>
-              <tr>
-                <td className='conference-details-category'>
-                  <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].main }}></span>
-                  Avg. Distance Between Schools
-                </td>
-                <td className='conference-details-item'>{Math.round(conference.avgDistanceBetweenSchools)} miles</td>
-              </tr>
-              <tr>
-                <td className='conference-details-category'>
-                  <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].light }}></span>
-                  Avg. Distance from GeoCenter
-                </td>
-                <td className='conference-details-item'>{Math.round(conference.avgDistanceFromCenter)} miles</td>
-              </tr>
+              {avgDistanceBetweenBoolean ?
+                <tr>
+                  <td className='conference-details-category'>
+                    <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].main }}></span>
+                    Avg. Distance Between Schools
+                  </td>
+                  <td className='conference-details-item'>{Math.round(conference.avgDistanceBetweenSchools)} miles</td>
+                </tr>
+                : null}
+              {avgDistanceFromCenterBoolean ?
+                <tr>
+                  <td className='conference-details-category'>
+                    <span className="conference-details-color-square" style={{ backgroundColor: confColors[selectedConference].light }}></span>
+                    Avg. Distance from GeoCenter
+                  </td>
+                  <td className='conference-details-item'>{Math.round(conference.avgDistanceFromCenter)} miles</td>
+                </tr>
+                : null}
             </tbody>
           </table>
         </div>
