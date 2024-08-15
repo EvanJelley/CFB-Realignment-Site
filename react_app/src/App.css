@@ -273,7 +273,8 @@ body {
 
 .autoscroll-button:hover {
     background-color: #f1f1f1;
-    color: rgb(0, 37, 76)
+    color: rgb(0, 37, 76);
+    text-decoration: none; 
 }
 
 .autoscroll-button:focus {
@@ -293,6 +294,10 @@ body {
     border-radius: 25px;
     overflow: hidden;
     margin: auto;
+}
+
+.button-container:hover {
+    text-decoration: none;
 }
 
 .more-button-container {
@@ -454,12 +459,15 @@ body {
     padding-left: 1rem;
 }
 
+/* Conference Detail */
+
 .chart-details-container {
     background-color: white;
     border: 1px solid rgb(107, 135, 165);
     border-radius: 20px;
     overflow: scroll;
     height: 90vh;
+    position: relative;
 }
 
 .ind-conf-detail-container {
@@ -469,7 +477,43 @@ body {
     border-bottom: 2px solid rgb(107, 135, 165);
 }
 
-/* Conference Detail */
+.conference-details-navbar {
+    background-color: rgb(0, 37, 76);
+    color: white;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    align-items: center;
+}
+
+.sidebar-dropdown-menu {
+    width: 20rem;
+    position: absolute;
+    left: -8rem;
+}
+
+.conference-details-navbar ul {
+    list-style: none;
+    margin: 0;
+}
+
+.sidebar-dropdown-list {
+    margin: 0;
+}
+
+.sidebar-control-button {
+    background-color: inherit;
+    border: none;
+    color: inherit;
+    padding: 0.5rem;
+    display: inline;
+}
+
+.sidebar-control-button:focus {
+    outline: none;
+    box-shadow: none;
+}
 
 .conference-details {
     color: rgb(0, 37, 76);
@@ -481,6 +525,10 @@ body {
     margin: 1rem;
     border-bottom: 1px solid rgb(107, 135, 165);
     font-size: 1rem;
+}
+
+.conference-details-details {
+    overflow: scroll;
 }
 
 .conference-details-category-header {
@@ -592,24 +640,19 @@ body {
     right: 0;
     bottom: 0;
     margin: auto;
-    /* This centers the element */
     width: 50%;
-    /* Adjust width as needed */
     background-size: cover;
     z-index: 1;
-    /* Lower z-index so it sits in the background */
     opacity: 0.1;
 }
 
 .team-list-schools {
     position: relative;
-    /* This ensures it's positioned in the stacking context */
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 1rem;
     z-index: 2;
-    /* Higher z-index so it sits in front */
 }
 
 .team-list-schoollogo {
@@ -618,23 +661,16 @@ body {
     margin: 0 1rem;
 }
 
-.team-list-table-row-button {
-    border: none;
-    background-color: inherit;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-}
-
 .team-list-table-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: transparent;
     padding: .5rem 2rem;
     border-bottom: 1px solid rgb(107, 135, 165);
 }
 
-.team-list-table-row-button:hover {
+.team-list-table-row:hover {
     background-color: rgb(107, 135, 165);
     color: white;
     cursor: pointer;
