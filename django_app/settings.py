@@ -171,3 +171,6 @@ SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=True)
 # Session Cookies and CSRF Cookies
 SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=True)
 CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=True)
+
+#CORs Headers
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=True)

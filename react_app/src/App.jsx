@@ -29,6 +29,7 @@ import {
 } from './distances';
 import Papa from 'papaparse';
 import _, { sum } from 'lodash';
+import easyPrint from 'leaflet-easyprint';
 
 Chart.register(CategoryScale);
 
@@ -1114,13 +1115,13 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
               <div className="dropdown-menu sidebar-dropdown-menu" aria-labelledby="navbarDropdown">
                 <ul className='sidebar-dropdown-list'>
                   <li className="nav-item" key="avgDistanceBetweenButton">
-                    <button onClick={(e) => { e.stopPropagation(); avgDistanceBetweenHandler()}} className='sidebar-control-button'>
+                    <button onClick={(e) => { e.stopPropagation(); avgDistanceBetweenHandler() }} className='sidebar-control-button'>
                       Distance Between Schools
                     </button>
                     {avgDistanceBetween ? <span className='sidebar-control-indicator'>✓</span> : null}
                   </li>
                   <li className="nav-item" key="avgDistanceFromCenterButton">
-                    <button onClick={(e) => { e.stopPropagation(); avgDistanceFromCenterHandler()}} className='sidebar-control-button'>
+                    <button onClick={(e) => { e.stopPropagation(); avgDistanceFromCenterHandler() }} className='sidebar-control-button'>
                       Distance from Center
                     </button>
                     {avgDistanceFromCenter ? <span className='sidebar-control-indicator'>✓</span> : null}
@@ -1757,6 +1758,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
   const [schoolCoordinates, setSchoolCoordinates] = useState({});
   const [confCountryCoords, setConfCountryCoords] = useState({});
   const [schoolToCenterLines, setSchoolToCenterLines] = useState({})
+  const [printButton, setPrintButton] = useState(false);
 
   const CircleRadius = confCountrySize * 1609
 
@@ -1821,6 +1823,19 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
   };
 
   useEffect(() => {
+    if (mapRef.current && !printButton) {
+      const { current: map } = mapRef;
+      setPrintButton(true);
+      L.easyPrint({
+        title: 'My awesome print button',
+        position: 'bottomright',
+        sizeModes: ['A4Portrait', 'A4Landscape'],
+        crossOriginIsolated: false
+      }).addTo(map);
+    }
+  }, [mapRef.current]);
+
+  useEffect(() => {
     setMapHeight(calculateHeight());
   }, [width]);
 
@@ -1879,6 +1894,23 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
     iconAnchor: [10, 0],
   });
 
+  const handleDownload = () => {
+    const map = L.map(mapRef.current).setView([37.8, -96], 4);
+    
+    LeafletImage(map, function(err, canvas) {
+      var img = document.createElement('img');
+      var dimensions = map.getSize();
+      img.width = dimensions.x;
+      img.height = dimensions.y;
+      img.src = canvas.toDataURL();
+      document.body.appendChild(img);
+    }
+    );
+    
+
+  };
+  
+
   return (
     <div ref={containerRef}>
       <MapContainer
@@ -1891,7 +1923,10 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
         zoomDelta={.5}
         minZoom={2}
         maxZoom={5}
-        whenCreated={(mapInstance) => { mapRef.current = mapInstance; handleResize(); }}
+        whenCreated={(mapInstance) => {
+          mapRef.current = mapInstance;
+          handleResize();
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
