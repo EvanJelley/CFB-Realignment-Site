@@ -1830,7 +1830,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
         title: 'My awesome print button',
         position: 'bottomright',
         sizeModes: ['A4Portrait', 'A4Landscape'],
-        crossOriginIsolated: false
+        exportOnly: true
       }).addTo(map);
     }
   }, [mapRef.current]);
