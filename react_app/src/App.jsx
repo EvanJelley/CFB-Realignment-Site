@@ -199,7 +199,7 @@ function App() {
         const dimensions = await getImageDimmensions(school.logo, TEAMLOGOSIZE);
         const logoList = school.logo.split('/')
         const LOGO = AWSBUCKET + 'static/dist/images/school_logos/' + logoList[logoList.length - 1]
-        return { name: school.name, icon: L.icon({ iconUrl: LOGO, iconSize: dimensions, crossOrigin: true }) };
+        return { name: school.name, icon: L.icon({ iconUrl: school.logo, iconSize: dimensions, crossOrigin: false }) };
       });
       const schoolIconsArray = await Promise.all(schoolIconsPromises);
       let schoolIcons = {};
@@ -1764,6 +1764,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
   const [confCountryCoords, setConfCountryCoords] = useState({});
   const [schoolToCenterLines, setSchoolToCenterLines] = useState({})
   const [printButton, setPrintButton] = useState(false);
+  const [printControl, setPrintControl] = useState(null);
 
   const CircleRadius = confCountrySize * 1609
 
@@ -1828,18 +1829,24 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
   };
 
   useEffect(() => {
-    if (mapRef.current && !printButton) {
+    if (mapRef.current && !printButton && !mapElements.teams) {
       const { current: map } = mapRef;
       setPrintButton(true);
-      L.easyPrint({
+      const control = L.easyPrint({
         title: 'Conference Map Print',
         position: 'bottomright',
         sizeModes: ['A4Landscape'],
         filename: 'CFBRealignmentMap',
         exportOnly: true,
       }).addTo(map);
+      setPrintControl(control); // Store the control reference
+    } else if (mapRef.current && printControl && mapElements.teams) {
+      const { current: map } = mapRef;
+      map.removeControl(printControl); // Remove the control
+      setPrintControl(null); // Clear the control reference
+      setPrintButton(false); // Reset the print button state
     }
-  }, [mapRef.current]);
+  }, [mapRef.current, mapElements.teams]);
 
   useEffect(() => {
     setMapHeight(calculateHeight());
