@@ -182,7 +182,9 @@ function App() {
 
       const confIconsPromises = conferencesResponse.data.map(async (logo) => {
         const dimensions = await getImageDimmensions(logo.logo, CONFLOGOSIZE);
-        return { name: logo.name, icon: L.icon({ iconUrl: logo.logo, iconSize: dimensions }) };
+        const logoList = logo.logo.split('/')
+        const LOGO = AWSBUCKET + 'static/dist/images/conf_logos/' + logoList[logoList.length - 1]
+        return { name: logo.name, icon: L.icon({ iconUrl: LOGO, iconSize: dimensions, crossOrigin: true }) };
       });
       const confIconsArray = await Promise.all(confIconsPromises);
       let confIcons = {};
@@ -195,7 +197,9 @@ function App() {
       setAllSchools(responseSchools.data)
       const schoolIconsPromises = responseSchools.data.map(async (school) => {
         const dimensions = await getImageDimmensions(school.logo, TEAMLOGOSIZE);
-        return { name: school.name, icon: L.icon({ iconUrl: school.logo, iconSize: dimensions }) };
+        const logoList = school.logo.split('/')
+        const LOGO = AWSBUCKET + 'static/dist/images/school_logos/' + logoList[logoList.length - 1]
+        return { name: school.name, icon: L.icon({ iconUrl: LOGO, iconSize: dimensions, crossOrigin: true }) };
       });
       const schoolIconsArray = await Promise.all(schoolIconsPromises);
       let schoolIcons = {};
@@ -399,7 +403,7 @@ function App() {
       default:
         conferenceName == "Big East" ? setSport('basketball') : null
         selectedConferences.includes(conferenceName) ? newConferenceList = selectedConferences.filter((conf) => conf !== conferenceName) : newConferenceList = [...selectedConferences, conferenceName]
-        newConferenceList.length === 0 ? newConferenceList = [conferenceName] : null
+        newConferenceList.length === 0 && selectedCustomConfs.length === 0 ? newConferenceList = [conferenceName] : null
         break;
     }
     setSelectedConferences(newConferenceList)
@@ -633,6 +637,7 @@ function App() {
   var myIcon = L.icon({
     iconUrl: APIURL + '/media/images/conf_logos/ncaa.png',
     iconSize: [10, 10],
+    crossOrigin: true
   });
 
   return (
@@ -1827,10 +1832,11 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
       const { current: map } = mapRef;
       setPrintButton(true);
       L.easyPrint({
-        title: 'My awesome print button',
+        title: 'Conference Map Print',
         position: 'bottomright',
-        sizeModes: ['A4Portrait', 'A4Landscape'],
-        exportOnly: true
+        sizeModes: ['A4Landscape'],
+        filename: 'CFBRealignmentMap',
+        exportOnly: true,
       }).addTo(map);
     }
   }, [mapRef.current]);
@@ -1892,6 +1898,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
     iconUrl: AWSBUCKET + 'static/dist/images/FBicon.png',
     iconSize: [20, 20],
     iconAnchor: [10, 0],
+    crossOrigin: true,
   });
 
   const handleDownload = () => {
@@ -1961,7 +1968,7 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
           <Fragment key={`${school.name}-${school.id}-custom`}>
             {mapElements.teams ?
               <Marker position={[Number(school.latitude), Number(school.longitude)]}
-                icon={schoolIcons[school.name] || myIcon} zIndexOffset={1000} key={`${school.name}-${school.id}-custom-marker`}>
+                icon={schoolIcons[school.name] || genericIcon} zIndexOffset={1000} key={`${school.name}-${school.id}-custom-marker`}>
                 <Popup>
                   {school.name} - {school.city}, {school.state}
                 </Popup>
