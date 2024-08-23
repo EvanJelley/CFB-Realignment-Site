@@ -1105,6 +1105,38 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
     !avgDistanceBetween ? setAvgDistanceBetween(true) : setAvgDistanceFromCenter(!avgDistanceFromCenter)
   }
 
+  function downloadChart(conference) {
+    let customChartData = filteredChartData[conference];
+    customChartData.datasets[0].pointStyle = null;
+    customChartData.datasets[1].pointStyle = null;
+  
+    const canvas = document.createElement('canvas');
+    canvas.id = `${conference}-chart-adhoc`;
+    document.body.appendChild(canvas);
+  
+    let chart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: customChartData,
+      options: {
+        ...chartOptions,
+        animation: {
+          onComplete: function () {
+            const image = chart.toBase64Image();
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = `${conference}-chart.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+  
+            chart.destroy();
+            document.body.removeChild(canvas);
+          },
+        },
+      },
+    });
+  }
+
 
   return (
     <div className='chart-details-container'>
@@ -1155,7 +1187,10 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
                 avgDistanceBetweenBoolean={avgDistanceBetween}
                 avgDistanceFromCenterBoolean={avgDistanceFromCenter} />
               <div className='chart-container'>
-                {filteredChartData ? <Line data={filteredChartData[conference]} options={chartOptions} /> : null}
+                {filteredChartData ? <Line data={filteredChartData[conference]} options={chartOptions} id={`${conference}-chart`} /> : null}
+              </div>
+              <div className='download-chart-container' id={`${conference}-download-chart`}>
+                <button onClick={() => downloadChart(conference)} className='download-chart-button'>Download Chart</button>
               </div>
             </div>
           ) : (
@@ -1185,7 +1220,7 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
             avgDistanceBetweenBoolean={avgDistanceBetween}
             avgDistanceFromCenterBoolean={avgDistanceFromCenter}
           />
-          <div className='chart-container'>
+          <div className='chart-container' id={'NCAA-chart'}>
             {filteredChartData ? <Line data={filteredChartData["NCAA"]} options={chartOptions} /> : null}
           </div>
         </div>
@@ -1333,26 +1368,6 @@ function SchoolDetails({ school, schoolIcons, conferenceEra, selectTeamHandler }
     </div>
   )
 }
-
-function ChartControls({ avgDistanceBetween, avgDistanceFromCenter, setAvgDistanceBetween, setAvgDistanceFromCenter }) {
-  return (
-    <nav className="navbar" >
-      <div className="container-fluid ">
-        <li className="nav-item drop">
-          <button onClick={setAvgDistanceBetween} className='chart-control-button'>
-            Avg. Distance Between Schools
-          </button>
-        </li>
-        <li className="nav-item button-container">
-          <button onClick={setAvgDistanceFromCenter} className='chart-control-button'>
-            Avg. Distance from Center
-          </button>
-        </li>
-
-      </div>
-    </nav>
-  )
-};
 
 function MapControls({ setAnimation, animate, firstYear, lastYear, setYear, selectedConferences, setAutoScrollSpeed, setMapDisplayOptions, mapDisplayOptions, animationSpeed, confCountryOpacity, setConfCountryOpacity, confCountrySize, setConfCountrySize }) {
   return (
@@ -1910,8 +1925,8 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
 
   const handleDownload = () => {
     const map = L.map(mapRef.current).setView([37.8, -96], 4);
-    
-    LeafletImage(map, function(err, canvas) {
+
+    LeafletImage(map, function (err, canvas) {
       var img = document.createElement('img');
       var dimensions = map.getSize();
       img.width = dimensions.x;
@@ -1920,10 +1935,10 @@ function Map({ filteredConferenceList, conferenceIcons, schoolIcons, selectedCon
       document.body.appendChild(img);
     }
     );
-    
+
 
   };
-  
+
 
   return (
     <div ref={containerRef}>
