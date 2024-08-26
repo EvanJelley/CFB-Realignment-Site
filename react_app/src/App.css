@@ -199,6 +199,13 @@ body {
     height: 35vh;
 }
 
+.chart-container-large {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+}
+
 /* Map */
 .map-container {
     background-color: white;
@@ -274,7 +281,7 @@ body {
 .autoscroll-button:hover {
     background-color: #f1f1f1;
     color: rgb(0, 37, 76);
-    text-decoration: none; 
+    text-decoration: none;
 }
 
 .autoscroll-button:focus {
@@ -389,6 +396,13 @@ body {
     border-radius: 20px;
     overflow: hidden;
     width: 17rem;
+}
+
+.menu-notice {
+    color: #f1f1f1;
+    padding: 0.5rem;
+    margin: 0;
+    border-bottom: 1px solid #f1f1f1;
 }
 
 .map-controls-header {
@@ -603,6 +617,45 @@ body {
     background-color: rgb(107, 135, 165);
     color: white;
     cursor: pointer;
+}
+
+.download-chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem auto;
+}
+
+.download-chart-button {
+    padding: .5rem 1rem;
+    background-color: rgb(107, 135, 165);
+    color: white;
+    border: 1px solid rgb(107, 135, 165);
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.download-chart-button:hover {
+    color: rgb(107, 135, 165);
+    background-color: inherit;
+    border: 1px solid rgb(107, 135, 165);
+}
+
+.download-chart-button:active {
+    color: rgb(107, 135, 165);
+    background-color: inherit;
+    transform: scale(0.98);
+    border: 1px solid rgb(107, 135, 165);
+}
+
+.chart-title {
+    font-family: "Crimson Text", serif;
+    font-size: 2rem;
+    justify-content: center;
+    margin: 1rem;
+
 }
 
 /* Chart Controls */
@@ -853,7 +906,7 @@ body {
 
 .gray-out {
     filter: grayscale(100%);
-  }
+}
 
 .custom-conf-submit-button-container {
     display: flex;
@@ -886,7 +939,7 @@ body {
     border-radius: 50%;
     margin: 0 .5rem;
     background-color: inherit;
-}   
+}
 
 .custom-conf-bottom-row {
     margin-top: 1rem;
@@ -907,4 +960,4 @@ body {
 
 .about-for-devs a:hover {
     text-decoration: underline;
-}   
+}

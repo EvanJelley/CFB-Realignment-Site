@@ -251,8 +251,9 @@ function App() {
           selectedConferences.includes(conference.conference) && conference.basketball);
       }
 
-
       let conferenceCharts = {};
+      let allConfsLabels = [];
+      let allConfsData = [];
 
       selectedConferences.map((conferenceName) => {
         let conference = selectedConferenceList.filter((conference) => conference.conference == conferenceName);
@@ -275,8 +276,28 @@ function App() {
             },
           ],
         };
+        let allConfsDataBetween = conference ? conference.map((conf) => ({ x: conf.year, y: conf.avgDistanceBetweenSchools })) : [];
+        let allConfsDataFromCenter = conference ? conference.map((conf) => ({ x: conf.year, y: conf.avgDistanceFromCenter })) : [];
         conferenceCharts[conferenceName] = confData;
+
+        if (allConfsLabels[0] > confData.labels[0] || allConfsLabels.length === 0) {
+          allConfsLabels = confData.labels
+        }
+        confData.datasets[0].label = conferenceName + ' - ' + confData.datasets[0].label
+        confData.datasets[1].label = conferenceName + ' - ' + confData.datasets[1].label
+        confData.datasets[0].data = allConfsDataBetween
+        confData.datasets[1].data = allConfsDataFromCenter
+
+        allConfsData.push(confData.datasets[0])
+        allConfsData.push(confData.datasets[1])
       });
+
+      let allConfsChart = {
+        labels: allConfsLabels,
+        datasets: allConfsData,
+      }
+
+      conferenceCharts['All Conferences'] = allConfsChart;
 
       let totalYears = [];
       selectedConferenceList.map((conference) => {
@@ -1075,13 +1096,13 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
     } else if (avgDistanceBetween && !avgDistanceFromCenter) {
       let newChartData = _.cloneDeep(chartData)
       for (let conference in newChartData) {
-        newChartData[conference].datasets = newChartData[conference].datasets.filter((dataset) => dataset.label !== "Average Distance from Center")
+        newChartData[conference].datasets = newChartData[conference].datasets.filter((dataset) => !dataset.label.includes("Average Distance from Center"));
       }
       setFilteredChartData(newChartData)
     } else if (!avgDistanceBetween && avgDistanceFromCenter) {
       let newChartData = _.cloneDeep(chartData)
       for (let conference in newChartData) {
-        newChartData[conference].datasets = newChartData[conference].datasets.filter((dataset) => dataset.label !== "Average Distance Between Schools")
+        newChartData[conference].datasets = newChartData[conference].datasets.filter((dataset) => !dataset.label.includes("Average Distance Between Schools"))
       }
       setFilteredChartData(newChartData)
     }
@@ -1107,18 +1128,80 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
 
   function downloadChart(conference) {
     let customChartData = filteredChartData[conference];
-    customChartData.datasets[0].pointStyle = null;
-    customChartData.datasets[1].pointStyle = null;
-  
+
+    let chartTitle = `${conference} Geographic Data`;
+
+    if (avgDistanceBetween && avgDistanceFromCenter) {
+      for (let i = 0; i < customChartData.datasets.length; i++) {
+        customChartData.datasets[i].pointStyle = false;
+      }
+      chartTitle = `${conference} Geographic Data`;
+    } else if (avgDistanceBetween) {
+      for (let i = 0; i < customChartData.datasets.length; i++) {
+        customChartData.datasets[i].pointStyle = false;
+      }
+      chartTitle = `${conference} Average Distance Between Schools`;
+    } else if (avgDistanceFromCenter) {
+      for (let i = 0; i < customChartData.datasets.length; i++) {
+        customChartData.datasets[i].pointStyle = false;
+      }
+      chartTitle = `${conference} Average Distance from Geographic Center`;
+    }
+
+    const plugin = {
+      id: 'customCanvasBackgroundColor',
+      beforeDraw: (chart, args, options) => {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = options.color || '#99ffff';
+        ctx.fillRect(0, 0, chart.width, chart.height);
+        ctx.restore();
+      }
+    };
+
+    const customChartOptions = {
+      aspectRatio: 1.7,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+        },
+        customCanvasBackgroundColor: {
+          color: 'white',
+        },
+        title: {
+          display: true,
+          text: chartTitle,
+          color: '#00254c',
+          font: {
+            size: 20
+          }
+        },
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Miles',
+            color: '#00254c',
+            font: {
+              size: 16
+            }
+          }
+        },
+      },
+    };
+
     const canvas = document.createElement('canvas');
     canvas.id = `${conference}-chart-adhoc`;
     document.body.appendChild(canvas);
-  
+
     let chart = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: customChartData,
       options: {
-        ...chartOptions,
+        ...customChartOptions,
         animation: {
           onComplete: function () {
             const image = chart.toBase64Image();
@@ -1128,18 +1211,20 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-  
+
             chart.destroy();
             document.body.removeChild(canvas);
           },
         },
       },
+      plugins: [plugin],
     });
   }
 
 
   return (
     <div className='chart-details-container'>
+      {console.log('filteredChartData', filteredChartData)}
       <nav className="navbar conference-details-navbar" >
         <div className="container-fluid ">
           <div className="navbar-brand">Conference Data</div >
@@ -1220,8 +1305,19 @@ function DetailsSidebar({ filteredConferenceList, conferenceLogos, conferenceCol
             avgDistanceBetweenBoolean={avgDistanceBetween}
             avgDistanceFromCenterBoolean={avgDistanceFromCenter}
           />
+          <h3 className="chart-title">Average of Selected Conferences</h3>
           <div className='chart-container' id={'NCAA-chart'}>
             {filteredChartData ? <Line data={filteredChartData["NCAA"]} options={chartOptions} /> : null}
+          </div>
+          <div className='download-chart-container' id={`NCAA-download-chart`}>
+            <button onClick={() => downloadChart("NCAA")} className='download-chart-button'>Download Chart</button>
+          </div>
+          <h3 className="chart-title">All Selected Conferences</h3>
+          <div className='chart-container-large' id={'All-confs-chart'}>
+            {filteredChartData ? <Line data={filteredChartData["All Conferences"]} options={{ ...chartOptions, plugins: { legend: { display: true, position: 'bottom', } } }} /> : null}
+          </div>
+          <div className='download-chart-container' id={`All-confs-download-chart`}>
+            <button onClick={() => downloadChart("All Conferences")} className='download-chart-button'>Download Chart</button>
           </div>
         </div>
         {customConferences.map((conf) => {
@@ -1438,7 +1534,15 @@ function MapControls({ setAnimation, animate, firstYear, lastYear, setYear, sele
 
           </ul>
         </li>
-
+        {mapDisplayOptions.teams ?
+          <li className="nav-item dropdown more-circle">
+            <a className="nav-link more-button more-button-container" href="#" id="navbarDropdown" role="button"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">?</a>
+            <div className="dropdown-menu dropdown-menu-up more-map-menu menu-notice" aria-labelledby="navbarDropdown">
+              <p>Map downloading is currently unavailable with team logos. If you want to download the map simply unselect teams in the Map Controls menu and the download option will appear on the map.</p>
+            </div>
+          </li>
+          : null}
       </div>
     </nav>
   )
